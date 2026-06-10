@@ -1,11 +1,13 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import DashboardLayout from '../layouts/DashboardLayout';
-import { Card, Button } from '../components';
+import { Card, Button, AddTransactionModal } from '../components';
 import { NavItem } from '../types';
 
 const Transactions: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [showAddModal, setShowAddModal] = useState(searchParams.get('modal') === 'add');
 
   const navItems: NavItem[] = [
     { id: '1', label: 'Dashboard', icon: 'dashboard', path: '/dashboard' },
@@ -24,6 +26,21 @@ const Transactions: React.FC = () => {
     { id: '5', date: '2024-01-11', description: 'Gas', amount: -52.00, category: 'Transport', status: 'completed' },
   ];
 
+  const handleOpenModal = () => {
+    setShowAddModal(true);
+    navigate('/transactions?modal=add');
+  };
+
+  const handleCloseModal = () => {
+    setShowAddModal(false);
+    navigate('/transactions');
+  };
+
+  const handleSubmitTransaction = (data: any) => {
+    console.log('Transaction added:', data);
+    // Handle transaction submission here
+  };
+
   return (
     <DashboardLayout
       navItems={navItems}
@@ -39,7 +56,7 @@ const Transactions: React.FC = () => {
             View and manage all your transactions.
           </p>
         </div>
-        <Button variant="primary" size="md">
+        <Button variant="primary" size="md" onClick={handleOpenModal}>
           <span className="material-symbols-outlined text-[18px]">add</span>
           New Transaction
         </Button>
@@ -98,6 +115,13 @@ const Transactions: React.FC = () => {
           </table>
         </div>
       </Card>
+
+      {/* Add Transaction Modal */}
+      <AddTransactionModal
+        isOpen={showAddModal}
+        onClose={handleCloseModal}
+        onSubmit={handleSubmitTransaction}
+      />
     </DashboardLayout>
   );
 };

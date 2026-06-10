@@ -72,7 +72,7 @@ const Dashboard: React.FC = () => {
             Welcome back, Alex. Here's your financial summary.
           </p>
         </div>
-        <Button variant="primary" size="md">
+        <Button variant="primary" size="md" onClick={() => navigate('/transactions?modal=add')}>
           <span className="material-symbols-outlined text-[18px]">add</span>
           Add Transaction
         </Button>

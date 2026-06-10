@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MoneyFlow - Add New Debt Modal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "surface-container": "#1d1f27",
+                        "surface-container-high": "#282a32",
+                        "inverse-surface": "#e1e2ed",
+                        "secondary": "#4edea3",
+                        "primary-fixed": "#dbe1ff",
+                        "tertiary-container": "#996100",
+                        "secondary-fixed": "#6ffbbe",
+                        "on-background": "#e1e2ed",
+                        "secondary-fixed-dim": "#4edea3",
+                        "surface-variant": "#32343d",
+                        "surface-container-highest": "#32343d",
+                        "error": "#ffb4ab",
+                        "on-error": "#690005",
+                        "outline-variant": "#434655",
+                        "surface-dim": "#11131b",
+                        "surface-container-low": "#191b23",
+                        "secondary-container": "#00a572",
+                        "on-tertiary-container": "#ffeedd",
+                        "on-tertiary": "#472a00",
+                        "surface-container-lowest": "#0c0e16",
+                        "on-error-container": "#ffdad6",
+                        "primary-container": "#2563eb",
+                        "on-secondary": "#003824",
+                        "on-primary": "#002a78",
+                        "on-surface": "#e1e2ed",
+                        "on-secondary-container": "#00311f",
+                        "tertiary": "#ffb95f",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "surface-tint": "#b4c5ff",
+                        "primary": "#b4c5ff",
+                        "on-secondary-fixed-variant": "#005236",
+                        "inverse-on-surface": "#2e3039",
+                        "tertiary-fixed": "#ffddb8",
+                        "surface-bright": "#373942",
+                        "on-tertiary-fixed": "#2a1700",
+                        "on-surface-variant": "#c3c6d7",
+                        "on-primary-container": "#eeefff",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "surface": "#11131b",
+                        "inverse-primary": "#0053db",
+                        "error-container": "#93000a",
+                        "on-secondary-fixed": "#002113",
+                        "on-primary-fixed": "#00174b",
+                        "background": "#11131b",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "outline": "#8d90a0"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max": "1280px",
+                        "md": "16px",
+                        "base": "4px",
+                        "xs": "4px",
+                        "lg": "24px",
+                        "xl": "48px",
+                        "gutter": "24px",
+                        "sm": "8px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "numeric-display": ["Geist"],
+                        "label-md": ["Geist"],
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "numeric-display": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .modal-enter {
+            animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        /* Custom scrollbar for textarea */
+        textarea::-webkit-scrollbar {
+            width: 6px;
+        }
+        textarea::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        textarea::-webkit-scrollbar-thumb {
+            background-color: #434655;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-lg text-body-lg h-screen w-screen overflow-hidden relative">
+<!-- Background Context (Simulating Screen 5) -->
+<div class="absolute inset-0 z-0 bg-cover bg-center opacity-40 blur-sm" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuANcUkIai1pzREbdwitzFSzbeiAdDoyDa0dZGJxKJkzJ88vmd2RiN1FHqeMTGfVr1D3JX_E6jhX-fn1qZZRX6seRlcd7x-uPl5y479v9WHrozRynqrEsf-G0GZPo2kApmEkmU_nMw5VJqG7e6Y04aJN2RMg4urnMVQ9_x-EWbY4IhIQ-LFJsdMyELyVq6oQj-DSAyOgZwRX5ZmvO26JkOw1SnF7nzmBmzTUorrTBl0dTPSPOOhQnW4laGby2W9RvvWZnfsAu8Gd8T6P');"></div>
+<!-- Modal Overlay Backdrop -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md p-4 sm:p-lg">
+<!-- Modal Container -->
+<div aria-labelledby="modal-title" aria-modal="true" class="modal-enter w-full max-w-[520px] bg-surface-container border border-outline-variant rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden relative" role="dialog">
+<!-- Subtle Top Highlight -->
+<div class="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+<!-- Header -->
+<div class="flex items-center justify-between px-lg py-md border-b border-outline-variant/40">
+<h2 class="font-headline-md text-headline-md text-on-surface" id="modal-title">Add New Debt</h2>
+<button aria-label="Close modal" class="text-on-surface-variant hover:text-on-surface transition-colors p-sm rounded-lg hover:bg-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/50" type="button">
+<span class="material-symbols-outlined" data-icon="close" style="font-variation-settings: 'FILL' 0;">close</span>
+</button>
+</div>
+<!-- Form Body -->
+<form class="p-lg flex flex-col gap-lg overflow-y-auto max-h-[716px]">
+<!-- Person Name -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-sm" for="personName">Person Name</label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-md flex items-center pointer-events-none text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]" data-icon="person">person</span>
+</div>
+<input class="w-full bg-background border border-outline-variant rounded-lg pl-[44px] pr-md py-md font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" id="personName" name="personName" placeholder="e.g. Alex Johnson" type="text"/>
+</div>
+</div>
+<!-- Grid for Type and Date -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-lg">
+<!-- Debt Type -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-sm" for="debtType">Type</label>
+<div class="relative">
+<select class="w-full bg-background border border-outline-variant rounded-lg px-md py-md font-body-md text-body-md text-on-surface appearance-none focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" id="debtType" name="debtType">
+<option value="i_owe">I Owe</option>
+<option value="owes_me">Owes Me</option>
+</select>
+<div class="absolute inset-y-0 right-0 pr-md flex items-center pointer-events-none text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]" data-icon="expand_more">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Due Date -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-sm" for="dueDate">Due Date</label>
+<div class="relative">
+<input class="w-full bg-background border border-outline-variant rounded-lg px-md py-md font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all [&amp;::-webkit-calendar-picker-indicator]:opacity-0 [&amp;::-webkit-calendar-picker-indicator]:absolute [&amp;::-webkit-calendar-picker-indicator]:right-4 [&amp;::-webkit-calendar-picker-indicator]:w-5 [&amp;::-webkit-calendar-picker-indicator]:h-5 [&amp;::-webkit-calendar-picker-indicator]:cursor-pointer z-10 bg-transparent" id="dueDate" name="dueDate" type="date"/>
+<div class="absolute inset-y-0 right-0 pr-md flex items-center pointer-events-none text-on-surface-variant z-0">
+<span class="material-symbols-outlined text-[18px]" data-icon="calendar_today">calendar_today</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Original Amount -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-sm" for="amount">Original Amount</label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-md flex items-center pointer-events-none text-on-surface-variant font-numeric-display text-numeric-display">
+                            $
+                        </div>
+<input class="w-full bg-background border border-outline-variant rounded-lg pl-[36px] pr-md py-md font-numeric-display text-numeric-display text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" id="amount" min="0" name="amount" placeholder="0.00" step="0.01" type="number"/>
+</div>
+</div>
+<!-- Notes -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-sm" for="notes">Notes (Optional)</label>
+<textarea class="w-full bg-background border border-outline-variant rounded-lg px-md py-md font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-none" id="notes" name="notes" placeholder="Add details about this debt..." rows="3"></textarea>
+</div>
+</form>
+<!-- Footer Actions -->
+<div class="flex items-center justify-end gap-md px-lg py-md border-t border-outline-variant/40 bg-surface-container-high/50">
+<button class="px-lg py-[10px] rounded-lg font-label-md text-label-md text-on-surface border border-outline-variant/0 hover:border-outline-variant hover:bg-surface-variant transition-all focus:outline-none focus:ring-2 focus:ring-outline-variant" type="button">
+                    Cancel
+                </button>
+<button class="px-lg py-[10px] rounded-lg font-label-md text-label-md bg-primary-container text-on-primary-container hover:brightness-110 active:brightness-95 transition-all shadow-[0_2px_8px_rgba(37,99,235,0.25)] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-surface-container" type="submit">
+                    Add Debt
+                </button>
+</div>
+</div>
+</div>
+</body></html>

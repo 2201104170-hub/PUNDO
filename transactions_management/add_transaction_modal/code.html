@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Add New Transaction - MoneyFlow</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Geist:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.85); /* surface-container-high / 1E293B equivalent with opacity */
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(71, 85, 105, 0.4); /* subtle border */
+        }
+        
+        /* Custom Scrollbar for dropdowns */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5); 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(71, 85, 105, 0.8); 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 1); 
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "surface-container": "#1d1f27",
+                        "surface-container-high": "#282a32",
+                        "inverse-surface": "#e1e2ed",
+                        "secondary": "#4edea3",
+                        "primary-fixed": "#dbe1ff",
+                        "tertiary-container": "#996100",
+                        "secondary-fixed": "#6ffbbe",
+                        "on-background": "#e1e2ed",
+                        "secondary-fixed-dim": "#4edea3",
+                        "surface-variant": "#32343d",
+                        "surface-container-highest": "#32343d",
+                        "error": "#ffb4ab",
+                        "on-error": "#690005",
+                        "outline-variant": "#434655",
+                        "surface-dim": "#11131b",
+                        "surface-container-low": "#191b23",
+                        "secondary-container": "#00a572",
+                        "on-tertiary-container": "#ffeedd",
+                        "on-tertiary": "#472a00",
+                        "surface-container-lowest": "#0c0e16",
+                        "on-error-container": "#ffdad6",
+                        "primary-container": "#2563eb",
+                        "on-secondary": "#003824",
+                        "on-primary": "#002a78",
+                        "on-surface": "#e1e2ed",
+                        "on-secondary-container": "#00311f",
+                        "tertiary": "#ffb95f",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "surface-tint": "#b4c5ff",
+                        "primary": "#b4c5ff",
+                        "on-secondary-fixed-variant": "#005236",
+                        "inverse-on-surface": "#2e3039",
+                        "tertiary-fixed": "#ffddb8",
+                        "surface-bright": "#373942",
+                        "on-tertiary-fixed": "#2a1700",
+                        "on-surface-variant": "#c3c6d7",
+                        "on-primary-container": "#eeefff",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "surface": "#11131b",
+                        "inverse-primary": "#0053db",
+                        "error-container": "#93000a",
+                        "on-secondary-fixed": "#002113",
+                        "on-primary-fixed": "#00174b",
+                        "background": "#11131b",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "outline": "#8d90a0"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max": "1280px",
+                        "md": "16px",
+                        "base": "4px",
+                        "xs": "4px",
+                        "lg": "24px",
+                        "xl": "48px",
+                        "gutter": "24px",
+                        "sm": "8px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "numeric-display": ["Geist"],
+                        "label-md": ["Geist"],
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "numeric-display": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "headline-md": ["20px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-[#0F172A] text-on-surface font-body-lg min-h-screen relative overflow-hidden">
+<!-- Background App Context (Blurred) -->
+<div aria-hidden="true" class="absolute inset-0 z-0 select-none opacity-40 blur-sm pointer-events-none">
+<!-- Mock TopNav -->
+<header class="flex justify-between items-center h-16 px-gutter ml-64 w-[calc(100%-16rem)] bg-surface/80 border-b border-outline-variant docked full-width top-0 sticky">
+<div class="font-headline-md text-headline-md font-black text-primary">MoneyFlow</div>
+</header>
+<!-- Mock SideNav -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r border-outline-variant bg-surface-container flex flex-col p-4">
+<div class="mb-8">
+<div class="font-headline-md text-headline-md font-bold text-primary">MoneyFlow</div>
+<div class="font-label-md text-label-md text-on-surface-variant">Premium Finance</div>
+</div>
+<nav class="flex flex-col gap-2">
+<div class="flex items-center gap-3 px-4 py-3 bg-primary-container text-on-primary-container rounded-lg font-bold">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">payments</span>
+                    Transactions
+                </div>
+</nav>
+</aside>
+<!-- Mock Main Content Canvas -->
+<main class="ml-64 p-lg">
+<div class="h-64 bg-surface-container-high rounded-xl border border-outline-variant mb-md"></div>
+<div class="grid grid-cols-3 gap-md">
+<div class="h-32 bg-surface-container rounded-xl border border-outline-variant"></div>
+<div class="h-32 bg-surface-container rounded-xl border border-outline-variant"></div>
+<div class="h-32 bg-surface-container rounded-xl border border-outline-variant"></div>
+</div>
+</main>
+</div>
+<!-- Modal Overlay Backdrop -->
+<div class="fixed inset-0 z-40 bg-background/60 backdrop-blur-sm flex items-center justify-center p-4 sm:p-lg transition-opacity duration-300">
+<!-- Modal Container -->
+<div aria-labelledby="modal-title" aria-modal="true" class="glass-panel w-full max-w-lg rounded-[16px] shadow-[0_10px_30px_rgba(0,0,0,0.5)] transform transition-transform duration-300 scale-100 flex flex-col max-h-[921px]" role="dialog">
+<!-- Modal Header -->
+<div class="flex items-center justify-between px-lg py-md border-b border-outline-variant shrink-0">
+<h2 class="font-headline-md text-headline-md text-on-surface" id="modal-title">Add New Transaction</h2>
+<button aria-label="Close modal" class="text-on-surface-variant hover:text-on-surface transition-colors rounded-full p-2 hover:bg-surface-container-highest" type="button">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Modal Body (Scrollable if needed) -->
+<div class="px-lg py-lg overflow-y-auto grow custom-scrollbar">
+<!-- Status Indicator (Dynamic Flow) -->
+<div class="flex items-center gap-2 mb-lg p-3 rounded-lg bg-surface-container border border-outline-variant transition-colors duration-300" id="flow-indicator">
+<div class="flex items-center justify-center w-8 h-8 rounded-full bg-surface-variant">
+<span class="material-symbols-outlined text-outline" id="flow-icon">swap_horiz</span>
+</div>
+<div>
+<div class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Transaction Flow</div>
+<div class="font-body-md text-body-md font-semibold text-on-surface" id="flow-text">Select Type</div>
+</div>
+</div>
+<form class="space-y-lg" id="transaction-form">
+<!-- Form Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<!-- Date -->
+<div class="col-span-1">
+<label class="block font-label-md text-label-md text-on-surface-variant mb-sm uppercase tracking-wider" for="date">Date</label>
+<div class="relative">
+<input class="w-full bg-[#0F172A] border border-outline-variant rounded-lg px-3 py-2 text-on-surface font-body-md focus:outline-none focus:border-primary-container focus:ring-2 focus:ring-primary-container/30 transition-all [color-scheme:dark]" id="date" name="date" required="" type="date"/>
+</div>
+</div>
+<!-- Type -->
+<div class="col-span-1">
+<label class="block font-label-md text-label-md text-on-surface-variant mb-sm uppercase tracking-wider" for="type">Type</label>
+<div class="relative">
+<select class="w-full bg-[#0F172A] border border-outline-variant rounded-lg pl-3 pr-10 py-2 text-on-surface font-body-md appearance-none focus:outline-none focus:border-primary-container focus:ring-2 focus:ring-primary-container/30 transition-all cursor-pointer" id="type" name="type" required="">
+<option disabled="" selected="" value="">Select type...</option>
+<optgroup label="Money In">
+<option data-flow="in" value="income">Income</option>
+<option data-flow="in" value="utang_received">Utang Received</option>
+<option data-flow="in" value="savings_withdrawal">Savings Withdrawal</option>
+</optgroup>
+<optgroup label="Money Out">
+<option data-flow="out" value="expense">Expense</option>
+<option data-flow="out" value="paid_utang">Paid Utang</option>
+<option data-flow="out" value="given_money">Given Money</option>
+<option data-flow="out" value="savings_deposit">Savings Deposit</option>
+</optgroup>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-on-surface-variant pointer-events-none">expand_more</span>
+</div>
+</div>
+<!-- Category -->
+<div class="col-span-1 md:col-span-2">
+<label class="block font-label-md text-label-md text-on-surface-variant mb-sm uppercase tracking-wider" for="category">Category</label>
+<div class="relative">
+<select class="w-full bg-[#0F172A] border border-outline-variant rounded-lg pl-3 pr-10 py-2 text-on-surface font-body-md appearance-none focus:outline-none focus:border-primary-container focus:ring-2 focus:ring-primary-container/30 transition-all cursor-pointer" id="category" name="category" required="">
+<option disabled="" selected="" value="">Select category...</option>
+<option value="food">Food</option>
+<option value="transportation">Transportation</option>
+<option value="internet">Internet</option>
+<option value="bills">Bills</option>
+<option value="school">School</option>
+<option value="freelance">Freelance</option>
+<option value="family">Family</option>
+<option value="entertainment">Entertainment</option>
+<option value="emergency">Emergency</option>
+<option value="savings">Savings</option>
+<option value="miscellaneous">Miscellaneous</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-on-surface-variant pointer-events-none">expand_more</span>
+</div>
+</div>
+<!-- Description -->
+<div class="col-span-1 md:col-span-2">
+<label class="block font-label-md text-label-md text-on-surface-variant mb-sm uppercase tracking-wider" for="description">Description</label>
+<input class="w-full bg-[#0F172A] border border-outline-variant rounded-lg px-3 py-2 text-on-surface font-body-md placeholder:text-on-surface-variant focus:outline-none focus:border-primary-container focus:ring-2 focus:ring-primary-container/30 transition-all" id="description" name="description" placeholder="e.g. Grocery run, Client payment..." type="text"/>
+</div>
+<!-- Amount -->
+<div class="col-span-1 md:col-span-2">
+<label class="block font-label-md text-label-md text-on-surface-variant mb-sm uppercase tracking-wider" for="amount">Amount</label>
+<div class="flex rounded-lg border border-outline-variant focus-within:border-primary-container focus-within:ring-2 focus-within:ring-primary-container/30 transition-all bg-[#0F172A] overflow-hidden">
+<!-- Currency Toggle -->
+<div class="relative border-r border-outline-variant bg-surface-container">
+<select class="appearance-none bg-transparent pl-3 pr-8 py-3 text-on-surface font-label-md font-semibold cursor-pointer focus:outline-none h-full" id="currency" name="currency">
+<option value="PHP">PHP</option>
+<option value="USD">USD</option>
+<option value="EUR">EUR</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-3 text-on-surface-variant pointer-events-none text-[18px]">arrow_drop_down</span>
+</div>
+<!-- Amount Input -->
+<input class="w-full bg-transparent border-none px-4 py-3 text-on-surface font-numeric-display text-numeric-display text-right focus:outline-none focus:ring-0 placeholder:text-on-surface-variant/50" id="amount" min="0" name="amount" placeholder="0.00" required="" step="0.01" type="number"/>
+</div>
+</div>
+</div>
+</form>
+</div>
+<!-- Modal Footer -->
+<div class="px-lg py-md border-t border-outline-variant bg-surface-container-low/50 rounded-b-[16px] flex justify-end gap-3 shrink-0">
+<button class="px-4 py-2 rounded-lg font-body-md font-semibold border border-outline-variant text-on-surface hover:bg-surface-container-highest active:bg-surface-container transition-colors" type="button">
+                    Cancel
+                </button>
+<button class="px-4 py-2 rounded-lg font-body-md font-semibold bg-primary-container text-white hover:brightness-110 active:brightness-95 transition-all shadow-sm" form="transaction-form" type="submit">
+                    Save Transaction
+                </button>
+</div>
+</div>
+</div>
+<script>
+        // Simple script to handle dynamic flow indicator based on type selection
+        document.addEventListener('DOMContentLoaded', () => {
+            const typeSelect = document.getElementById('type');
+            const flowIndicator = document.getElementById('flow-indicator');
+            const flowIcon = document.getElementById('flow-icon');
+            const flowText = document.getElementById('flow-text');
+
+            // Set today's date as default
+            document.getElementById('date').valueAsDate = new Date();
+
+            typeSelect.addEventListener('change', (e) => {
+                const selectedOption = e.target.options[e.target.selectedIndex];
+                const flow = selectedOption.getAttribute('data-flow');
+
+                if (flow === 'in') {
+                    flowIndicator.className = 'flex items-center gap-2 mb-lg p-3 rounded-lg border transition-colors duration-300 bg-secondary-container/10 border-secondary/30';
+                    flowIcon.className = 'material-symbols-outlined text-secondary';
+                    flowIcon.textContent = 'arrow_downward';
+                    flowText.className = 'font-body-md text-body-md font-semibold text-secondary';
+                    flowText.textContent = 'Money In';
+                    flowIcon.parentElement.className = 'flex items-center justify-center w-8 h-8 rounded-full bg-secondary-container/20';
+                } else if (flow === 'out') {
+                    flowIndicator.className = 'flex items-center gap-2 mb-lg p-3 rounded-lg border transition-colors duration-300 bg-error-container/10 border-error/30';
+                    flowIcon.className = 'material-symbols-outlined text-error';
+                    flowIcon.textContent = 'arrow_upward';
+                    flowText.className = 'font-body-md text-body-md font-semibold text-error';
+                    flowText.textContent = 'Money Out';
+                    flowIcon.parentElement.className = 'flex items-center justify-center w-8 h-8 rounded-full bg-error-container/20';
+                } else {
+                    // Reset
+                    flowIndicator.className = 'flex items-center gap-2 mb-lg p-3 rounded-lg bg-surface-container border border-outline-variant transition-colors duration-300';
+                    flowIcon.className = 'material-symbols-outlined text-outline';
+                    flowIcon.textContent = 'swap_horiz';
+                    flowText.className = 'font-body-md text-body-md font-semibold text-on-surface';
+                    flowText.textContent = 'Select Type';
+                    flowIcon.parentElement.className = 'flex items-center justify-center w-8 h-8 rounded-full bg-surface-variant';
+                }
+            });
+        });
+    </script>
+</body></html>

@@ -1,11 +1,13 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import DashboardLayout from '../layouts/DashboardLayout';
-import { Card, Button } from '../components';
+import { Card, Button, AddDebtModal } from '../components';
 import { NavItem } from '../types';
 
 const DebtTracker: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [showAddModal, setShowAddModal] = useState(searchParams.get('modal') === 'add');
 
   const navItems: NavItem[] = [
     { id: '1', label: 'Dashboard', icon: 'dashboard', path: '/dashboard' },
@@ -22,6 +24,21 @@ const DebtTracker: React.FC = () => {
     { id: '3', creditor: 'Auto Loan', amount: 12000, interestRate: 5.2, dueDate: '2024-03-10', status: 'active' },
   ];
 
+  const handleOpenModal = () => {
+    setShowAddModal(true);
+    navigate('/debt-tracker?modal=add');
+  };
+
+  const handleCloseModal = () => {
+    setShowAddModal(false);
+    navigate('/debt-tracker');
+  };
+
+  const handleSubmitDebt = (data: any) => {
+    console.log('Debt added:', data);
+    // Handle debt submission here
+  };
+
   return (
     <DashboardLayout
       navItems={navItems}
@@ -37,7 +54,7 @@ const DebtTracker: React.FC = () => {
             Track and manage outstanding balances.
           </p>
         </div>
-        <Button variant="primary" size="md">
+        <Button variant="primary" size="md" onClick={handleOpenModal}>
           <span className="material-symbols-outlined text-[18px]">add</span>
           Add Debt
         </Button>
@@ -123,6 +140,13 @@ const DebtTracker: React.FC = () => {
           ))}
         </div>
       </Card>
+
+      {/* Add Debt Modal */}
+      <AddDebtModal
+        isOpen={showAddModal}
+        onClose={handleCloseModal}
+        onSubmit={handleSubmitDebt}
+      />
     </DashboardLayout>
   );
 };
