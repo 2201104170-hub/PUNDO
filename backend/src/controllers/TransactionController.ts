@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { TransactionModel } from '../models/Transaction.js';
 import { TransactionRequest } from '../types/index.js';
+import { FinancialService } from '../services/FinancialService.js';
 
 export class TransactionController {
   static async create(req: Request, res: Response) {
@@ -12,6 +13,9 @@ export class TransactionController {
 
       const data = req.body as TransactionRequest;
       const transaction = await TransactionModel.create(userId, data);
+
+      // Process transaction to update balances automatically
+      await FinancialService.processTransaction(transaction);
 
       res.status(201).json({
         message: 'Transaction created successfully',

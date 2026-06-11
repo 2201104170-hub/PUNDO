@@ -2,23 +2,36 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Input } from '../components';
 
-const Login: React.FC = () => {
+const Signup: React.FC = () => {
   const navigate = useNavigate();
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
     
     // Simple validation
-    if (!email || !password) {
+    if (!name || !email || !password || !confirmPassword) {
       setError('Please fill in all fields');
       return;
     }
 
-    // Navigate to dashboard (in a real app, you'd validate credentials)
-    navigate('/dashboard');
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+
+    // In a real app, you'd call the API to create the account
+    // For now, just navigate to login
+    navigate('/login');
   };
 
   return (
@@ -42,10 +55,10 @@ const Login: React.FC = () => {
           </p>
         </div>
 
-        {/* Login Card */}
+        {/* Signup Card */}
         <div className="bg-surface-container border border-outline-variant rounded-xl p-8">
           <h2 className="font-headline-md text-headline-md text-on-surface mb-6">
-            Welcome Back
+            Create Account
           </h2>
 
           {error && (
@@ -54,7 +67,15 @@ const Login: React.FC = () => {
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleSignup} className="space-y-4">
+            <Input
+              label="Full Name"
+              type="text"
+              placeholder="John Doe"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+
             <Input
               label="Email Address"
               type="email"
@@ -63,23 +84,21 @@ const Login: React.FC = () => {
               onChange={(e) => setEmail(e.target.value)}
             />
 
-            <div>
-              <Input
-                label="Password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <div className="mt-2 text-right">
-                <a
-                  href="#"
-                  className="font-label-md text-label-md text-primary hover:text-primary-fixed transition-colors"
-                >
-                  Forgot password?
-                </a>
-              </div>
-            </div>
+            <Input
+              label="Password"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+
+            <Input
+              label="Confirm Password"
+              type="password"
+              placeholder="••••••••"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
 
             <Button
               variant="primary"
@@ -87,7 +106,7 @@ const Login: React.FC = () => {
               type="submit"
               className="w-full mt-6"
             >
-              Sign In
+              Sign Up
             </Button>
           </form>
 
@@ -98,7 +117,7 @@ const Login: React.FC = () => {
             <div className="flex-1 h-px bg-outline-variant"></div>
           </div>
 
-          {/* Social Login */}
+          {/* Social Signup */}
           <button className="w-full py-2 px-4 border border-outline-variant rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container-high transition-colors">
             <span className="material-symbols-outlined align-middle mr-2">
               account_circle
@@ -106,21 +125,21 @@ const Login: React.FC = () => {
             Continue with Google
           </button>
 
-          {/* Sign Up Link */}
+          {/* Sign In Link */}
           <p className="mt-6 text-center font-body-md text-body-md text-on-surface-variant">
-            Don't have an account?{' '}
+            Already have an account?{' '}
             <button
-              onClick={() => navigate('/signup')}
+              onClick={() => navigate('/login')}
               className="text-primary hover:text-primary-fixed transition-colors font-medium"
             >
-              Sign up
+              Sign in
             </button>
           </p>
         </div>
 
         {/* Footer Text */}
         <p className="text-center mt-6 font-body-md text-body-md text-on-surface-variant">
-          By signing in, you agree to our{' '}
+          By signing up, you agree to our{' '}
           <a href="#" className="text-primary hover:text-primary-fixed">
             Terms of Service
           </a>
@@ -130,4 +149,4 @@ const Login: React.FC = () => {
   );
 };
 
-export default Login;
+export default Signup;

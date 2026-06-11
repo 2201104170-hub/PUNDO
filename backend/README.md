@@ -450,6 +450,30 @@ Create a `Dockerfile` and `docker-compose.yml` for containerized deployment.
 
 For issues or questions, check the frontend README or create an issue on GitHub.
 
+taskkill /PID 15680 /F
+netstat -ano | findstr :5000
+
+On Windows, that’s Command Prompt (cmd.exe) or PowerShell.
+On macOS or Linux, that’s the Terminal app.
+
+Here’s what to do step by step, assuming Windows first:
+
+Open Command Prompt: Press Win + R, type cmd, and hit Enter.
+Check which process is using port 5000:
+netstat -ano | findstr :5000
+Kill the process by its PID (here it’s 15680):
+taskkill /PID 15680 /F
+
+If you’re on Linux/macOS, open Terminal and run:
+
+kill 15680
+
+or, if it refuses:
+
+kill -9 15680
+
+After that, port 5000 will be free and your server can start.
+
 ## 📄 License
 
 MIT

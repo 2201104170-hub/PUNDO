@@ -4,9 +4,9 @@ import { Transaction, TransactionRequest } from '../types/index.js';
 export class TransactionModel {
   static async create(userId: string, data: TransactionRequest): Promise<Transaction> {
     const query = `
-      INSERT INTO transactions (user_id, date, description, amount, category, type, status, currency)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      RETURNING id, user_id, date, description, amount, category, type, status, currency, created_at, updated_at
+      INSERT INTO transactions (user_id, date, description, amount, category, type, status, currency, debt_id)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING id, user_id, date, description, amount, category, type, status, currency, debt_id, created_at, updated_at
     `;
 
     const result = await pool.query(query, [
@@ -18,6 +18,7 @@ export class TransactionModel {
       data.type,
       data.status || 'completed',
       data.currency || 'PHP',
+      data.debtId || null,
     ]);
 
     return this.mapRow(result.rows[0]);
@@ -32,7 +33,7 @@ export class TransactionModel {
     `;
 
     const result = await pool.query(query, [userId, limit, offset]);
-    return result.rows.map((row) => this.mapRow(row));
+    return result.rows.map((row: any) => this.mapRow(row));
   }
 
   static async findById(id: string, userId: string): Promise<Transaction | null> {
@@ -98,7 +99,7 @@ export class TransactionModel {
     `;
 
     const result = await pool.query(query, [userId, startDate, endDate]);
-    return result.rows.map((row) => this.mapRow(row));
+    return result.rows.map((row: any) => this.mapRow(row));
   }
 
   private static mapRow(row: any): Transaction {
@@ -112,6 +113,7 @@ export class TransactionModel {
       type: row.type,
       status: row.status,
       currency: row.currency,
+      debtId: row.debt_id,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };

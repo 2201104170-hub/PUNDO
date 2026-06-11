@@ -6,7 +6,7 @@ export class UserModel {
     const query = `
       INSERT INTO users (email, password, name)
       VALUES ($1, $2, $3)
-      RETURNING id, email, password, name, avatar, created_at, updated_at
+      RETURNING id, email, password, name, avatar, savings_balance, created_at, updated_at
     `;
 
     const result = await pool.query(query, [email, password, name]);
@@ -18,6 +18,7 @@ export class UserModel {
       password: row.password,
       name: row.name,
       avatar: row.avatar,
+      savingsBalance: parseFloat(row.savings_balance || 0),
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };
@@ -36,6 +37,7 @@ export class UserModel {
       password: row.password,
       name: row.name,
       avatar: row.avatar,
+      savingsBalance: parseFloat(row.savings_balance || 0),
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };
@@ -54,6 +56,7 @@ export class UserModel {
       password: row.password,
       name: row.name,
       avatar: row.avatar,
+      savingsBalance: parseFloat(row.savings_balance || 0),
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };
@@ -72,13 +75,17 @@ export class UserModel {
       fields.push(`avatar = $${paramCount++}`);
       values.push(data.avatar);
     }
+    if (data.savingsBalance !== undefined) {
+      fields.push(`savings_balance = $${paramCount++}`);
+      values.push(data.savingsBalance);
+    }
 
     values.push(id);
     const query = `
       UPDATE users
       SET ${fields.join(', ')}, updated_at = NOW()
       WHERE id = $${paramCount}
-      RETURNING id, email, password, name, avatar, created_at, updated_at
+      RETURNING id, email, password, name, avatar, savings_balance, created_at, updated_at
     `;
 
     const result = await pool.query(query, values);
@@ -90,6 +97,7 @@ export class UserModel {
       password: row.password,
       name: row.name,
       avatar: row.avatar,
+      savingsBalance: parseFloat(row.savings_balance || 0),
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };

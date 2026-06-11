@@ -5,6 +5,9 @@ import authRoutes from './routes/auth.js';
 import transactionRoutes from './routes/transactions.js';
 import debtRoutes from './routes/debts.js';
 import dashboardRoutes from './routes/dashboard.js';
+import analyticsRoutes from './routes/analytics.js';
+import monthlyReviewRoutes from './routes/monthly-review.js';
+import insightsRoutes from './routes/insights.js';
 import { errorHandler } from './middleware/auth.js';
 
 dotenv.config();
@@ -30,6 +33,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/debts', debtRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/monthly-review', monthlyReviewRoutes);
+app.use('/api/insights', insightsRoutes);
 
 // Error handling
 app.use(errorHandler);

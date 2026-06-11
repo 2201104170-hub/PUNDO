@@ -4,15 +4,16 @@ import { Debt, DebtRequest } from '../types/index.js';
 export class DebtModel {
   static async create(userId: string, data: DebtRequest): Promise<Debt> {
     const query = `
-      INSERT INTO debts (user_id, creditor, amount, interest_rate, due_date, type, status, notes)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      RETURNING id, user_id, creditor, amount, interest_rate, due_date, type, status, notes, created_at, updated_at
+      INSERT INTO debts (user_id, creditor, amount, remaining_balance, interest_rate, due_date, type, status, notes)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING id, user_id, creditor, amount, remaining_balance, interest_rate, due_date, type, status, notes, created_at, updated_at
     `;
 
     const result = await pool.query(query, [
       userId,
       data.creditor,
       data.amount,
+      data.remainingBalance ?? data.amount,
       data.interestRate,
       data.dueDate,
       data.type,
@@ -31,7 +32,7 @@ export class DebtModel {
     `;
 
     const result = await pool.query(query, [userId]);
-    return result.rows.map((row) => this.mapRow(row));
+    return result.rows.map((row: any) => this.mapRow(row));
   }
 
   static async findById(id: string, userId: string): Promise<Debt | null> {
@@ -54,6 +55,10 @@ export class DebtModel {
     if (data.amount !== undefined) {
       fields.push(`amount = $${paramCount++}`);
       values.push(data.amount);
+    }
+    if (data.remainingBalance !== undefined) {
+      fields.push(`remaining_balance = $${paramCount++}`);
+      values.push(data.remainingBalance);
     }
     if (data.interestRate !== undefined) {
       fields.push(`interest_rate = $${paramCount++}`);
@@ -81,7 +86,7 @@ export class DebtModel {
       UPDATE debts
       SET ${fields.join(', ')}, updated_at = NOW()
       WHERE id = $${paramCount++} AND user_id = $${paramCount}
-      RETURNING id, user_id, creditor, amount, interest_rate, due_date, type, status, notes, created_at, updated_at
+      RETURNING id, user_id, creditor, amount, remaining_balance, interest_rate, due_date, type, status, notes, created_at, updated_at
     `;
 
     const result = await pool.query(query, values);
@@ -101,7 +106,7 @@ export class DebtModel {
     `;
 
     const result = await pool.query(query, [userId]);
-    return result.rows.map((row) => this.mapRow(row));
+    return result.rows.map((row: any) => this.mapRow(row));
   }
 
   private static mapRow(row: any): Debt {
@@ -109,8 +114,9 @@ export class DebtModel {
       id: row.id,
       userId: row.user_id,
       creditor: row.creditor,
-      amount: row.amount,
-      interestRate: row.interest_rate,
+      amount: parseFloat(row.amount),
+      remainingBalance: parseFloat(row.remaining_balance),
+      interestRate: parseFloat(row.interest_rate),
       dueDate: row.due_date,
       type: row.type,
       status: row.status,

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { DebtModel } from '../models/Debt.js';
 import { TransactionModel } from '../models/Transaction.js';
 import { DebtRequest, FinancialMetrics, DashboardStats } from '../types/index.js';
+import { FinancialService } from '../services/FinancialService.js';
 
 export class DebtController {
   static async create(req: Request, res: Response) {
@@ -12,6 +13,10 @@ export class DebtController {
       }
 
       const data = req.body as DebtRequest;
+      // Set remaining_balance to amount initially if not provided
+      if (!data.remainingBalance) {
+        data.remainingBalance = data.amount;
+      }
       const debt = await DebtModel.create(userId, data);
 
       res.status(201).json({
@@ -131,47 +136,21 @@ export class DashboardController {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      // Get all transactions and debts
-      const transactions = await TransactionModel.findByUserId(userId, 1000);
-      const debts = await DebtModel.findByUserId(userId);
-
-      // Calculate metrics
-      const totalIncome = transactions
-        .filter((t) => t.type === 'income' && t.status === 'completed')
-        .reduce((sum, t) => sum + t.amount, 0);
-
-      const totalExpenses = transactions
-        .filter((t) => t.type === 'expense' && t.status === 'completed')
-        .reduce((sum, t) => sum + t.amount, 0);
-
-      const totalDebt = debts
-        .filter((d) => d.status !== 'paid')
-        .reduce((sum, d) => sum + d.amount, 0);
-
-      const netFlow = totalIncome - totalExpenses;
-      const totalBalance = totalIncome - totalExpenses - totalDebt;
-      const savingsRate = totalIncome > 0 ? (netFlow / totalIncome) * 100 : 0;
-
-      const metrics: FinancialMetrics = {
-        totalBalance: Math.max(0, totalBalance),
-        totalIncome,
-        totalExpenses,
-        savingsRate,
-        netFlow,
-        totalDebt,
-      };
+      // Use FinancialService to calculate all metrics
+      const metrics = await FinancialService.getFinancialMetrics(userId);
 
       // Get recent transactions (last 5)
-      const recentTransactions = transactions.slice(0, 5);
+      const transactions = await TransactionModel.findByUserId(userId, 5, 0);
 
-      // Get upcoming debts (next 5)
+      // Get upcoming debts (next 5 active debts)
+      const debts = await DebtModel.findByUserId(userId);
       const upcomingDebts = debts
-        .filter((d) => d.status !== 'paid')
+        .filter((d) => d.status === 'active')
         .slice(0, 5);
 
       const stats: DashboardStats = {
         metrics,
-        recentTransactions,
+        recentTransactions: transactions,
         upcomingDebts,
       };
 
