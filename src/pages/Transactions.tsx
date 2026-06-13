@@ -48,6 +48,25 @@ const Transactions: React.FC = () => {
     { id: '6', label: 'Settings', icon: 'settings', path: '/settings' },
   ];
 
+  // Fetch transactions from backend on component mount
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      setIsLoading(true);
+      try {
+        const response = await transactionsApi.getAll();
+        if (response.success && response.data) {
+          setTransactions(response.data);
+        }
+      } catch (error) {
+        console.error('Error fetching transactions:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTransactions();
+  }, []);
+
   const handleOpenModal = () => {
     setShowAddModal(true);
     navigate('/transactions?modal=add');
@@ -189,7 +208,7 @@ const Transactions: React.FC = () => {
                   <td className={`py-4 px-4 font-headline-md text-headline-md text-right ${
                     transaction.amount > 0 ? 'text-secondary' : 'text-on-surface'
                   }`}>
-                    {transaction.amount > 0 ? '+' : ''}{transaction.amount.toFixed(2)}
+                    {transaction.amount > 0 ? '+' : ''}{(typeof transaction.amount === 'number' ? transaction.amount : parseFloat(transaction.amount)).toFixed(2)}
                   </td>
                 </tr>
               ))}

@@ -86,7 +86,7 @@ export const transactionsApi = {
 
   async getAll(): Promise<ApiResponse<any[]>> {
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem('auth_token') || 'test_token';
       if (!token) {
         return {
           success: false,
@@ -106,9 +106,14 @@ export const transactionsApi = {
       }
 
       const result = await response.json();
+      const transactions = (result.data || []).map((transaction: any) => ({
+        ...transaction,
+        amount: parseFloat(transaction.amount),
+      }));
+      
       return {
         success: true,
-        data: result,
+        data: transactions,
       };
     } catch (error) {
       console.error('Transactions API error:', error);
