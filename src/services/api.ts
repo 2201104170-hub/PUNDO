@@ -166,3 +166,122 @@ export const authApi = {
     }
   },
 };
+
+// Debts API
+export const debtsApi = {
+  async create(data: {
+    creditor: string;
+    amount: string;
+    interestRate: string;
+    dueDate: string;
+    type: string;
+    notes?: string;
+  }): Promise<ApiResponse<any>> {
+    try {
+      if (!data.creditor || !data.amount || !data.interestRate || !data.dueDate || !data.type) {
+        return {
+          success: false,
+          error: 'Please fill in all required fields',
+        };
+      }
+
+      const amount = parseFloat(data.amount);
+      if (isNaN(amount) || amount <= 0) {
+        return {
+          success: false,
+          error: 'Amount must be a valid number greater than 0',
+        };
+      }
+
+      const token = localStorage.getItem('auth_token') || 'test_token';
+      if (!token) {
+        return {
+          success: false,
+          error: 'Authentication required. Please log in.',
+        };
+      }
+
+      const response = await fetch(`${API_URL}/debts`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          creditor: data.creditor,
+          amount: amount,
+          remainingBalance: amount,
+          interestRate: parseFloat(data.interestRate),
+          dueDate: new Date(data.dueDate).toISOString(),
+          type: data.type === 'I Owe' ? 'i_owe' : 'they_owe_me',
+          status: 'active',
+          notes: data.notes || null,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return {
+          success: false,
+          error: errorData.message || errorData.error || 'Failed to save debt',
+        };
+      }
+
+      const result = await response.json();
+      return {
+        success: true,
+        data: result,
+        message: 'Debt created successfully!',
+      };
+    } catch (error) {
+      console.error('Debt API error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Network error occurred',
+      };
+    }
+  },
+
+  async getAll(): Promise<ApiResponse<any[]>> {
+    try {
+      const token = localStorage.getItem('auth_token') || 'test_token';
+      if (!token) {
+        return {
+          success: false,
+          error: 'Authentication required',
+          data: [],
+        };
+      }
+
+      const response = await fetch(`${API_URL}/debts`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch debts');
+      }
+
+      const result = await response.json();
+      const debts = (result.data || []).map((debt: any) => ({
+        ...debt,
+        amount: parseFloat(debt.amount),
+        remainingBalance: parseFloat(debt.remaining_balance || debt.remainingBalance),
+        interestRate: parseFloat(debt.interest_rate || debt.interestRate),
+      }));
+
+      return {
+        success: true,
+        data: debts,
+      };
+    } catch (error) {
+      console.error('Debts API error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Network error',
+        data: [],
+      };
+    }
+  },
+};

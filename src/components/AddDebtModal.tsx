@@ -1,18 +1,21 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
 import { Button, Input } from './index';
+import { debtsApi } from '../services/api';
 
 interface AddDebtModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit?: (data: DebtFormData) => void;
+  onSubmit?: (data: DebtFormData) => void | Promise<void>;
+  isLoading?: boolean;
 }
 
 interface DebtFormData {
-  personName: string;
+  creditor: string;
   type: string;
   dueDate: string;
   amount: string;
+  interestRate: string;
   notes: string;
 }
 
@@ -20,14 +23,18 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
+  isLoading = false,
 }) => {
   const [formData, setFormData] = useState<DebtFormData>({
-    personName: '',
+    creditor: '',
     type: 'I Owe',
     dueDate: '',
     amount: '',
+    interestRate: '',
     notes: '',
   });
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -39,26 +46,61 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit?.(formData);
-    setFormData({
-      personName: '',
-      type: 'I Owe',
-      dueDate: '',
-      amount: '',
-      notes: '',
-    });
-    onClose();
+    setLoading(true);
+    setMessage(null);
+
+    try {
+      const response = await debtsApi.create(formData);
+
+      if (response.success) {
+        setMessage({
+          type: 'success',
+          text: response.message || 'Debt created successfully!',
+        });
+
+        // Call parent onSubmit if provided
+        if (onSubmit) {
+          await onSubmit(formData);
+        }
+
+        // Reset form after 1.5 seconds
+        setTimeout(() => {
+          setFormData({
+            creditor: '',
+            type: 'I Owe',
+            dueDate: '',
+            amount: '',
+            interestRate: '',
+            notes: '',
+          });
+          setMessage(null);
+          onClose();
+        }, 1500);
+      } else {
+        setMessage({
+          type: 'error',
+          text: response.error || 'Failed to create debt',
+        });
+      }
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'An error occurred',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Add New Debt">
       <form onSubmit={handleSubmit} className="space-y-lg">
-        {/* Person Name */}
+        {/* Creditor Name */}
         <div>
           <label className="font-label-md text-label-md text-on-surface-variant mb-sm block">
-            Person Name
+            Creditor Name
           </label>
           <div className="relative">
             <span className="absolute inset-y-0 left-0 pl-md flex items-center pointer-events-none text-on-surface-variant">
@@ -66,10 +108,11 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
             </span>
             <input
               type="text"
-              name="personName"
-              value={formData.personName}
+              name="creditor"
+              value={formData.creditor}
               onChange={handleInputChange}
-              placeholder="e.g. Alex Johnson"
+              placeholder="e.g. Bank of America"
+              required
               className="w-full bg-surface-container-low border border-outline-variant text-on-surface rounded-lg px-md py-sm pl-12 focus:outline-none focus:border-primary"
             />
           </div>
@@ -85,11 +128,11 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
               name="type"
               value={formData.type}
               onChange={handleInputChange}
+              required
               className="w-full bg-surface-container-low border border-outline-variant text-on-surface rounded-lg px-md py-sm focus:outline-none focus:border-primary"
             >
               <option value="I Owe">I Owe</option>
               <option value="They Owe Me">They Owe Me</option>
-              <option value="Loan">Loan</option>
             </select>
           </div>
           <div>
@@ -101,25 +144,45 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
               name="dueDate"
               value={formData.dueDate}
               onChange={handleInputChange}
+              required
               className="w-full bg-surface-container-low border border-outline-variant text-on-surface rounded-lg px-md py-sm focus:outline-none focus:border-primary"
             />
           </div>
         </div>
 
-        {/* Original Amount */}
-        <div>
-          <label className="font-label-md text-label-md text-on-surface-variant mb-sm block">
-            Original Amount
-          </label>
-          <div className="flex items-center gap-sm">
-            <span className="text-on-surface font-headline-md">$</span>
+        {/* Amount and Interest Rate Row */}
+        <div className="grid grid-cols-2 gap-md">
+          <div>
+            <label className="font-label-md text-label-md text-on-surface-variant mb-sm block">
+              Amount
+            </label>
+            <div className="flex items-center gap-sm">
+              <span className="text-on-surface font-headline-md">$</span>
+              <input
+                type="number"
+                name="amount"
+                value={formData.amount}
+                onChange={handleInputChange}
+                placeholder="0.00"
+                step="0.01"
+                required
+                className="flex-1 bg-surface-container-low border border-outline-variant text-on-surface rounded-lg px-md py-sm focus:outline-none focus:border-primary"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="font-label-md text-label-md text-on-surface-variant mb-sm block">
+              Interest Rate (%)
+            </label>
             <input
               type="number"
-              name="amount"
-              value={formData.amount}
+              name="interestRate"
+              value={formData.interestRate}
               onChange={handleInputChange}
               placeholder="0.00"
-              className="flex-1 bg-surface-container-low border border-outline-variant text-on-surface rounded-lg px-md py-sm focus:outline-none focus:border-primary"
+              step="0.01"
+              required
+              className="w-full bg-surface-container-low border border-outline-variant text-on-surface rounded-lg px-md py-sm focus:outline-none focus:border-primary"
             />
           </div>
         </div>
@@ -138,13 +201,24 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
           />
         </div>
 
+        {/* Message Display */}
+        {message && (
+          <div className={`p-md rounded-lg ${
+            message.type === 'success'
+              ? 'bg-primary-container/20 text-primary'
+              : 'bg-error-container/20 text-error'
+          }`}>
+            {message.text}
+          </div>
+        )}
+
         {/* Buttons */}
         <div className="flex gap-md justify-end pt-md border-t border-outline-variant/40">
-          <Button variant="secondary" onClick={onClose} type="button">
+          <Button variant="secondary" onClick={onClose} type="button" disabled={loading}>
             Cancel
           </Button>
-          <Button variant="primary" type="submit">
-            Add Debt
+          <Button variant="primary" type="submit" disabled={loading}>
+            {loading ? 'Adding...' : 'Add Debt'}
           </Button>
         </div>
       </form>

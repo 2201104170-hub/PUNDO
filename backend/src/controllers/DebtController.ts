@@ -19,6 +19,24 @@ export class DebtController {
       }
       const debt = await DebtModel.create(userId, data);
 
+      // Create a corresponding transaction record
+      try {
+        const transactionAmount = data.type === 'i_owe' ? -data.amount : data.amount;
+        await TransactionModel.create(userId, {
+          date: new Date().toISOString(),
+          description: `Debt recorded: ${data.creditor}`,
+          amount: transactionAmount,
+          category: 'Debt',
+          type: data.type === 'i_owe' ? 'debt_payment' : 'money_lent',
+          status: 'completed',
+          currency: 'PHP',
+          debtId: debt.id,
+        });
+      } catch (transactionError) {
+        console.warn('Warning: Failed to create transaction record for debt:', transactionError);
+        // Don't fail the debt creation if transaction creation fails
+      }
+
       res.status(201).json({
         message: 'Debt created successfully',
         debt,
