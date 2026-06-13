@@ -1,11 +1,27 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { Card, Button, Input } from '../components';
 import { NavItem } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 
 const Settings: React.FC = () => {
   const navigate = useNavigate();
+  const { user, updateProfile } = useAuth();
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      setFirstName(user.firstName);
+      setLastName(user.lastName);
+      setEmail(user.email);
+    }
+  }, [user]);
 
   const navItems: NavItem[] = [
     { id: '1', label: 'Dashboard', icon: 'dashboard', path: '/dashboard' },
@@ -15,6 +31,39 @@ const Settings: React.FC = () => {
     { id: '5', label: 'Analytics', icon: 'analytics', path: '/analytics' },
     { id: '6', label: 'Settings', icon: 'settings', path: '/settings', active: true },
   ];
+
+  const handleSave = async () => {
+    setMessage(null);
+    if (!firstName || !lastName || !email) {
+      setMessage({ type: 'error', text: 'Please fill in all fields' });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await updateProfile(firstName, lastName, email);
+      setMessage({ type: 'success', text: 'Profile updated successfully!' });
+      setIsEditing(false);
+      setTimeout(() => setMessage(null), 2000);
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'Failed to update profile',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    if (user) {
+      setFirstName(user.firstName);
+      setLastName(user.lastName);
+      setEmail(user.email);
+    }
+    setIsEditing(false);
+    setMessage(null);
+  };
 
   return (
     <DashboardLayout
@@ -31,22 +80,68 @@ const Settings: React.FC = () => {
         </p>
       </div>
 
+      {/* Status Message */}
+      {message && (
+        <div
+          className={`mb-6 p-4 rounded-lg border flex items-center gap-3 ${
+            message.type === 'success'
+              ? 'bg-green-50 border-green-300 text-green-800'
+              : 'bg-red-50 border-red-300 text-red-800'
+          }`}
+        >
+          <span className="material-symbols-outlined">
+            {message.type === 'success' ? 'check_circle' : 'error'}
+          </span>
+          <span className="font-body-md">{message.text}</span>
+        </div>
+      )}
+
       {/* Account Settings */}
       <Card title="Account Settings" className="mb-8">
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input label="First Name" placeholder="Alex" value="Alex" />
-            <Input label="Last Name" placeholder="Mercer" value="Mercer" />
+            <Input
+              label="First Name"
+              placeholder="John"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              disabled={!isEditing}
+            />
+            <Input
+              label="Last Name"
+              placeholder="Doe"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              disabled={!isEditing}
+            />
           </div>
           <Input
             label="Email Address"
             type="email"
-            placeholder="alex@example.com"
-            value="alex@example.com"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={!isEditing}
           />
           <div className="flex gap-4 pt-4">
-            <Button variant="primary">Save Changes</Button>
-            <Button variant="secondary">Cancel</Button>
+            {!isEditing ? (
+              <Button variant="primary" onClick={() => setIsEditing(true)}>
+                Edit Profile
+              </Button>
+            ) : (
+              <>
+                <Button
+                  variant="primary"
+                  onClick={handleSave}
+                  disabled={isSaving}
+                >
+                  {isSaving ? 'Saving...' : 'Save Changes'}
+                </Button>
+                <Button variant="secondary" onClick={handleCancel} disabled={isSaving}>
+                  Cancel
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </Card>

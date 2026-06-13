@@ -18,4 +18,24 @@ pool.on('error', (err) => {
   process.exit(-1);
 });
 
+// Test database connection
+export const testConnection = async (): Promise<boolean> => {
+  try {
+    const client = await pool.connect();
+    const result = await client.query('SELECT NOW()');
+    client.release();
+    console.log('✅ PostgreSQL Database Connected Successfully');
+    console.log(`   Database: ${process.env.DB_NAME}`);
+    console.log(`   Host: ${process.env.DB_HOST}:${process.env.DB_PORT}`);
+    console.log(`   User: ${process.env.DB_USER}`);
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to Connect to PostgreSQL Database');
+    console.error(`   Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    console.error(`   Host: ${process.env.DB_HOST}:${process.env.DB_PORT}`);
+    console.error(`   Database: ${process.env.DB_NAME}`);
+    return false;
+  }
+};
+
 export default pool;

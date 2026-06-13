@@ -7,14 +7,15 @@ async function seed() {
 
     const client = await pool.connect();
 
-    // Create test user
+    // Create test user with fixed UUID to match auth middleware
     const hashedPassword = await bcrypt.hash('password123', 10);
+    const testUserId = '123e4567-e89b-12d3-a456-426614174000';
     
     const userResult = await client.query(
-      `INSERT INTO users (email, password, name, avatar)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO users (id, email, password, name, avatar)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING id`,
-      ['test@example.com', hashedPassword, 'Test User', null]
+      [testUserId, 'test@example.com', hashedPassword, 'Test User', null]
     );
 
     const userId = userResult.rows[0].id;
@@ -79,9 +80,9 @@ async function seed() {
 
     for (const debt of debtsData) {
       await client.query(
-        `INSERT INTO debts (user_id, creditor, amount, interest_rate, due_date, type, status)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [userId, debt.creditor, debt.amount, debt.interestRate, debt.dueDate, debt.type, 'active']
+        `INSERT INTO debts (user_id, creditor, amount, remaining_balance, interest_rate, due_date, type, status)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [userId, debt.creditor, debt.amount, debt.amount, debt.interestRate, debt.dueDate, debt.type, 'active']
       );
     }
 

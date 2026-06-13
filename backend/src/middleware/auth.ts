@@ -18,6 +18,15 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
       return res.status(401).json({ error: 'No token provided' });
     }
 
+    // Allow test_token in development mode
+    if (process.env.NODE_ENV === 'development' && token === 'test_token') {
+      req.user = { 
+        id: '123e4567-e89b-12d3-a456-426614174000', // Valid UUID for test user
+        email: 'test@example.com' 
+      };
+      return next();
+    }
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_secret_key') as JWTPayload;
     req.user = decoded;
     next();

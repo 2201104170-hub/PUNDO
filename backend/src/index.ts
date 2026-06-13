@@ -9,17 +9,35 @@ import analyticsRoutes from './routes/analytics.js';
 import monthlyReviewRoutes from './routes/monthly-review.js';
 import insightsRoutes from './routes/insights.js';
 import { errorHandler } from './middleware/auth.js';
+import { testConnection } from './config/database.js';
 
 dotenv.config();
 
 const app: Express = express();
 const port = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+// CORS configuration - allow multiple development origins
+const corsOptions = {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:3002',
+      'http://localhost:3003',
+      process.env.CLIENT_URL,
+    ].filter(Boolean);
+
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
-}));
+};
+
+// Middleware
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -46,7 +64,11 @@ app.use((req, res) => {
 });
 
 // Start server
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+app.listen(port, async () => {
+  console.log(`\n🚀 Server is running on port ${port}`);
+  console.log(`   Environment: ${process.env.NODE_ENV || 'development'}\n`);
+  
+  // Test database connection
+  await testConnection();
+  console.log('');
 });

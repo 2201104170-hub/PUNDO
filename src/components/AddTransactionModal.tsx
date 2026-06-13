@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Modal from './Modal';
 import { Button, Input } from './index';
+import { TRANSACTION_TYPE_OPTIONS, TRANSACTION_CATEGORIES } from '../types';
 
 interface AddTransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit?: (data: TransactionFormData) => void;
+  onSubmit?: (data: TransactionFormData) => void | Promise<void>;
+  isLoading?: boolean;
 }
 
 interface TransactionFormData {
@@ -21,6 +23,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
+  isLoading = false,
 }) => {
   const [formData, setFormData] = useState<TransactionFormData>({
     date: new Date().toISOString().split('T')[0],
@@ -55,6 +58,15 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
     onClose();
   };
 
+  // Get category options based on selected type
+  const categoryOptions = useMemo(() => {
+    if (!formData.type) return [];
+    return TRANSACTION_CATEGORIES[formData.type] || [];
+  }, [formData.type]);
+
+  // Get transaction type label and icon
+  const selectedTypeOption = TRANSACTION_TYPE_OPTIONS.find(t => t.value === formData.type);
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Add New Transaction">
       <form onSubmit={handleSubmit} className="space-y-lg">
@@ -64,8 +76,14 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
             TRANSACTION FLOW
           </label>
           <div className="flex items-center gap-md p-md bg-surface-container-low border border-outline-variant rounded-lg">
-            <span className="material-symbols-outlined text-on-surface-variant">trending_up</span>
-            <span className="text-on-surface font-body-md">Select Type</span>
+            <span className={`material-symbols-outlined ${
+              selectedTypeOption ? selectedTypeOption.color : 'text-on-surface-variant'
+            }`}>
+              {selectedTypeOption ? selectedTypeOption.icon : 'trending_up'}
+            </span>
+            <span className="text-on-surface font-body-md">
+              {selectedTypeOption ? selectedTypeOption.label : 'Select Type'}
+            </span>
           </div>
         </div>
 
@@ -90,12 +108,22 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
             <select
               name="type"
               value={formData.type}
-              onChange={handleInputChange}
+              onChange={(e) => {
+                handleInputChange(e);
+                // Reset category when type changes
+                setFormData((prev) => ({
+                  ...prev,
+                  category: '',
+                }));
+              }}
               className="w-full bg-surface-container-low border border-outline-variant text-on-surface rounded-lg px-md py-sm focus:outline-none focus:border-primary"
             >
               <option value="">Select type...</option>
-              <option value="income">Income</option>
-              <option value="expense">Expense</option>
+              {TRANSACTION_TYPE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -109,15 +137,17 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
             name="category"
             value={formData.category}
             onChange={handleInputChange}
-            className="w-full bg-surface-container-low border border-outline-variant text-on-surface rounded-lg px-md py-sm focus:outline-none focus:border-primary"
+            disabled={!formData.type}
+            className={`w-full bg-surface-container-low border border-outline-variant text-on-surface rounded-lg px-md py-sm focus:outline-none focus:border-primary ${
+              !formData.type ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
           >
             <option value="">Select category...</option>
-            <option value="food">Food & Dining</option>
-            <option value="transport">Transportation</option>
-            <option value="utilities">Utilities</option>
-            <option value="entertainment">Entertainment</option>
-            <option value="salary">Salary</option>
-            <option value="other">Other</option>
+            {categoryOptions.map((category) => (
+              <option key={category} value={category.toLowerCase().replace(/\s+/g, '_')}>
+                {category}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -164,11 +194,20 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
 
         {/* Buttons */}
         <div className="flex gap-md justify-end pt-md border-t border-outline-variant/40">
-          <Button variant="secondary" onClick={onClose} type="button">
+          <Button variant="secondary" onClick={onClose} type="button" disabled={isLoading}>
             Cancel
           </Button>
-          <Button variant="primary" type="submit">
-            Save Transaction
+          <Button variant="primary" type="submit" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <span className="material-symbols-outlined animate-spin inline mr-2">
+                  progress_activity
+                </span>
+                Saving...
+              </>
+            ) : (
+              'Save Transaction'
+            )}
           </Button>
         </div>
       </form>

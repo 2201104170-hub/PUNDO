@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { NavItem } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 
 interface SidebarProps {
   navItems: NavItem[];
@@ -9,6 +10,7 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ navItems, onLogout }) => {
   const location = useLocation();
+  const { user } = useAuth();
 
   return (
     <nav className="hidden md:flex flex-col h-screen w-64 fixed left-0 top-0 bg-surface-container border-r border-outline-variant p-4 z-50">
@@ -70,7 +72,7 @@ const Sidebar: React.FC<SidebarProps> = ({ navItems, onLogout }) => {
           />
           <div>
             <p className="font-body-md text-body-md font-bold text-on-surface">
-              Alex Mercer
+              {user?.email || 'User Profile'}
             </p>
           </div>
         </div>

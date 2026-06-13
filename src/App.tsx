@@ -1,10 +1,15 @@
 import React from 'react';
 import { RouterProvider } from 'react-router-dom';
 import { router } from './routes/router';
+import { AuthProvider } from './contexts/AuthContext';
 import './styles/globals.css';
 
 const App: React.FC = () => {
-  return <RouterProvider router={router} />;
+  return (
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
+  );
 };
 
 export default App;

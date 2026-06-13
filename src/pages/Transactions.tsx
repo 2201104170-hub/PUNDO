@@ -1,13 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { Card, Button, AddTransactionModal } from '../components';
 import { NavItem } from '../types';
+import { transactionsApi } from '../services/api';
+
+interface Transaction {
+  id: string;
+  date: string;
+  description: string;
+  amount: number;
+  category: string;
+  type: string;
+  status: string;
+  currency?: string;
+}
+
+interface TransactionFormData {
+  date: string;
+  type: string;
+  category: string;
+  description: string;
+  amount: string;
+  currency: string;
+}
 
 const Transactions: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [showAddModal, setShowAddModal] = useState(searchParams.get('modal') === 'add');
+  const [transactions, setTransactions] = useState<Transaction[]>([
+    { id: '1', date: '2024-01-15', description: 'Salary Deposit', amount: 4500, category: 'Income', type: 'income', status: 'completed' },
+    { id: '2', date: '2024-01-14', description: 'Grocery Store', amount: -125.50, category: 'Food', type: 'expense', status: 'completed' },
+    { id: '3', date: '2024-01-13', description: 'Electric Bill', amount: -89.00, category: 'Utilities', type: 'expense', status: 'completed' },
+    { id: '4', date: '2024-01-12', description: 'Restaurant', amount: -45.30, category: 'Dining', type: 'expense', status: 'completed' },
+    { id: '5', date: '2024-01-11', description: 'Gas', amount: -52.00, category: 'Transport', type: 'expense', status: 'completed' },
+  ]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const navItems: NavItem[] = [
     { id: '1', label: 'Dashboard', icon: 'dashboard', path: '/dashboard' },
@@ -18,14 +48,6 @@ const Transactions: React.FC = () => {
     { id: '6', label: 'Settings', icon: 'settings', path: '/settings' },
   ];
 
-  const transactions = [
-    { id: '1', date: '2024-01-15', description: 'Salary Deposit', amount: 4500, category: 'Income', status: 'completed' },
-    { id: '2', date: '2024-01-14', description: 'Grocery Store', amount: -125.50, category: 'Food', status: 'completed' },
-    { id: '3', date: '2024-01-13', description: 'Electric Bill', amount: -89.00, category: 'Utilities', status: 'completed' },
-    { id: '4', date: '2024-01-12', description: 'Restaurant', amount: -45.30, category: 'Dining', status: 'completed' },
-    { id: '5', date: '2024-01-11', description: 'Gas', amount: -52.00, category: 'Transport', status: 'completed' },
-  ];
-
   const handleOpenModal = () => {
     setShowAddModal(true);
     navigate('/transactions?modal=add');
@@ -34,11 +56,55 @@ const Transactions: React.FC = () => {
   const handleCloseModal = () => {
     setShowAddModal(false);
     navigate('/transactions');
+    setMessage(null);
   };
 
-  const handleSubmitTransaction = (data: any) => {
-    console.log('Transaction added:', data);
-    // Handle transaction submission here
+  const handleSubmitTransaction = async (data: TransactionFormData) => {
+    setIsLoading(true);
+    setMessage(null);
+
+    try {
+      const response = await transactionsApi.create(data);
+
+      if (response.success) {
+        setMessage({
+          type: 'success',
+          text: response.message || 'Transaction saved successfully!',
+        });
+
+        // Add the new transaction to the list
+        const amount = data.type === 'income' ? parseFloat(data.amount) : -parseFloat(data.amount);
+        const newTransaction: Transaction = {
+          id: Date.now().toString(),
+          date: data.date,
+          type: data.type,
+          category: data.category,
+          description: data.description,
+          amount: amount,
+          currency: data.currency || 'PHP',
+          status: 'completed',
+        };
+
+        setTransactions((prev) => [newTransaction, ...prev]);
+
+        // Close modal after 1.5 seconds
+        setTimeout(() => {
+          handleCloseModal();
+        }, 1500);
+      } else {
+        setMessage({
+          type: 'error',
+          text: response.error || 'Failed to save transaction',
+        });
+      }
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'An unexpected error occurred',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -61,6 +127,22 @@ const Transactions: React.FC = () => {
           New Transaction
         </Button>
       </div>
+
+      {/* Status Message */}
+      {message && (
+        <div
+          className={`mb-6 p-4 rounded-lg border flex items-center gap-3 ${
+            message.type === 'success'
+              ? 'bg-green-50 border-green-300 text-green-800'
+              : 'bg-red-50 border-red-300 text-red-800'
+          }`}
+        >
+          <span className="material-symbols-outlined">
+            {message.type === 'success' ? 'check_circle' : 'error'}
+          </span>
+          <span className="font-body-md">{message.text}</span>
+        </div>
+      )}
 
       {/* Filters */}
       <Card className="mb-8">
@@ -121,6 +203,7 @@ const Transactions: React.FC = () => {
         isOpen={showAddModal}
         onClose={handleCloseModal}
         onSubmit={handleSubmitTransaction}
+        isLoading={isLoading}
       />
     </DashboardLayout>
   );

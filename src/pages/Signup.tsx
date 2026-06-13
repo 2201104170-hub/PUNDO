@@ -1,17 +1,21 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Input } from '../components';
+import { useAuth } from '../contexts/AuthContext';
 
 const Signup: React.FC = () => {
   const navigate = useNavigate();
+  const { signup } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     
     // Simple validation
     if (!name || !email || !password || !confirmPassword) {
@@ -29,9 +33,20 @@ const Signup: React.FC = () => {
       return;
     }
 
-    // In a real app, you'd call the API to create the account
-    // For now, just navigate to login
-    navigate('/login');
+    setIsLoading(true);
+    try {
+      // Split name into first and last name
+      const nameParts = name.trim().split(' ');
+      const firstName = nameParts[0];
+      const lastName = nameParts.slice(1).join(' ') || 'User';
+
+      await signup(firstName, lastName, email, password);
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Sign up failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -105,8 +120,9 @@ const Signup: React.FC = () => {
               size="md"
               type="submit"
               className="w-full mt-6"
+              disabled={isLoading}
             >
-              Sign Up
+              {isLoading ? 'Creating Account...' : 'Sign Up'}
             </Button>
           </form>
 
