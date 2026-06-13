@@ -2,6 +2,8 @@ import React, { useState, useMemo } from 'react';
 import Modal from './Modal';
 import { Button, Input } from './index';
 import { TRANSACTION_TYPE_OPTIONS, TRANSACTION_CATEGORIES } from '../types';
+import { useAuth } from '../contexts/AuthContext';
+import { getCountriesList, getCurrencySymbol } from '../utils/currency';
 
 interface AddTransactionModalProps {
   isOpen: boolean;
@@ -25,13 +27,14 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   onSubmit,
   isLoading = false,
 }) => {
+  const { currency } = useAuth();
   const [formData, setFormData] = useState<TransactionFormData>({
     date: new Date().toISOString().split('T')[0],
     type: '',
     category: '',
     description: '',
     amount: '',
-    currency: 'PHP',
+    currency: currency,
   });
 
   const handleInputChange = (
@@ -168,18 +171,20 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
         {/* Amount */}
         <div>
           <label className="font-label-md text-label-md text-on-surface-variant mb-sm block">
-            AMOUNT
+            AMOUNT (OPTIONAL CURRENCY)
           </label>
           <div className="flex gap-md">
             <select
               name="currency"
               value={formData.currency}
               onChange={handleInputChange}
-              className="bg-surface-container-low border border-outline-variant text-on-surface rounded-lg px-md py-sm focus:outline-none focus:border-primary w-20"
+              className="bg-surface-container-low border border-outline-variant text-on-surface rounded-lg px-md py-sm focus:outline-none focus:border-primary"
             >
-              <option value="PHP">PHP</option>
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
+              {getCountriesList().map((country) => (
+                <option key={country.code} value={country.code}>
+                  {country.flag} {country.code} ({country.symbol})
+                </option>
+              ))}
             </select>
             <input
               type="number"
@@ -190,6 +195,9 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
               className="flex-1 bg-surface-container-low border border-outline-variant text-on-surface rounded-lg px-md py-sm focus:outline-none focus:border-primary"
             />
           </div>
+          <p className="font-label-sm text-label-sm text-on-surface-variant mt-xs">
+            Your default currency: {getCurrencySymbol(currency)} ({currency})
+          </p>
         </div>
 
         {/* Buttons */}

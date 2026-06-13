@@ -4,13 +4,15 @@ import DashboardLayout from '../layouts/DashboardLayout';
 import { Card, Button, Input } from '../components';
 import { NavItem } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+import { getCountriesList, getCurrencySymbol } from '../utils/currency';
 
 const Settings: React.FC = () => {
   const navigate = useNavigate();
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, currency, setCurrency } = useAuth();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  const [selectedCurrency, setSelectedCurrency] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -21,7 +23,10 @@ const Settings: React.FC = () => {
       setLastName(user.lastName);
       setEmail(user.email);
     }
-  }, [user]);
+    if (currency) {
+      setSelectedCurrency(currency);
+    }
+  }, [user, currency]);
 
   const navItems: NavItem[] = [
     { id: '1', label: 'Dashboard', icon: 'dashboard', path: '/dashboard' },
@@ -63,6 +68,14 @@ const Settings: React.FC = () => {
     }
     setIsEditing(false);
     setMessage(null);
+  };
+
+  const handleCurrencyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newCurrency = e.target.value;
+    setSelectedCurrency(newCurrency);
+    setCurrency(newCurrency);
+    setMessage({ type: 'success', text: `Currency changed to ${newCurrency}` });
+    setTimeout(() => setMessage(null), 2000);
   };
 
   return (
@@ -143,6 +156,35 @@ const Settings: React.FC = () => {
               </>
             )}
           </div>
+        </div>
+      </Card>
+
+      {/* Currency Preferences */}
+      <Card title="Currency Preferences" className="mb-8">
+        <div className="space-y-4">
+          <div>
+            <label className="font-label-md text-label-md text-on-surface-variant mb-2 block">
+              Select Your Preferred Currency
+            </label>
+            <select
+              value={selectedCurrency}
+              onChange={handleCurrencyChange}
+              className="w-full bg-surface-container-low border border-outline-variant text-on-surface rounded-lg px-4 py-3 focus:outline-none focus:border-primary"
+            >
+              <option value="">Choose a currency...</option>
+              {getCountriesList().map((country) => (
+                <option key={country.code} value={country.code}>
+                  {country.flag} {country.name} ({country.code} - {country.symbol})
+                </option>
+              ))}
+            </select>
+            <p className="font-label-sm text-label-sm text-on-surface-variant mt-2">
+              Your default currency is currently: <span className="font-bold">{getCurrencySymbol(selectedCurrency)} ({selectedCurrency})</span>
+            </p>
+          </div>
+          <p className="font-body-sm text-body-sm text-on-surface-variant">
+            This currency will be used as the default for all new transactions and debts. You can still override it when creating individual entries.
+          </p>
         </div>
       </Card>
 

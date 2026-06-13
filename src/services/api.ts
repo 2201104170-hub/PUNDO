@@ -366,6 +366,43 @@ export const reportsApi = {
   },
 };
 
+// Dashboard API
+export const dashboardApi = {
+  async getDashboardStats(): Promise<ApiResponse<any>> {
+    try {
+      const token = localStorage.getItem('auth_token') || 'test_token';
+      if (!token) {
+        return {
+          success: false,
+          error: 'Authentication required',
+        };
+      }
+
+      const response = await fetch(`${API_URL}/dashboard/stats`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch dashboard stats');
+      }
+
+      const result = await response.json();
+      return {
+        success: true,
+        data: result,
+      };
+    } catch (error) {
+      console.error('Dashboard API error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Network error',
+      };
+    }
+  },
+};
+
 // Analytics API
 export const analyticsApi = {
   async getAnalyticsData(): Promise<ApiResponse<any>> {

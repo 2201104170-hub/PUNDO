@@ -38,6 +38,8 @@ const Transactions: React.FC = () => {
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
   const navItems: NavItem[] = [
     { id: '1', label: 'Dashboard', icon: 'dashboard', path: '/dashboard' },
@@ -47,6 +49,32 @@ const Transactions: React.FC = () => {
     { id: '5', label: 'Analytics', icon: 'analytics', path: '/analytics' },
     { id: '6', label: 'Settings', icon: 'settings', path: '/settings' },
   ];
+
+  // Get unique categories from transactions
+  const getCategories = (): string[] => {
+    const categories = new Set(transactions.map(t => t.category));
+    return Array.from(categories).sort();
+  };
+
+  // Filter transactions based on search term and category
+  const getFilteredTransactions = (): Transaction[] => {
+    return transactions.filter(transaction => {
+      // Filter by search term
+      const searchLower = searchTerm.toLowerCase();
+      const matchesSearch = 
+        transaction.description.toLowerCase().includes(searchLower) ||
+        transaction.category.toLowerCase().includes(searchLower) ||
+        transaction.amount.toString().includes(searchLower) ||
+        transaction.date.includes(searchTerm);
+
+      // Filter by category
+      const matchesCategory = selectedCategory === 'all' || transaction.category === selectedCategory;
+
+      return matchesSearch && matchesCategory;
+    });
+  };
+
+  const filteredTransactions = getFilteredTransactions();
 
   // Fetch transactions from backend on component mount
   useEffect(() => {
@@ -169,14 +197,19 @@ const Transactions: React.FC = () => {
           <input
             type="text"
             placeholder="Search transactions..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="flex-1 bg-surface-container-low border border-outline-variant text-on-surface rounded-lg px-4 py-2 focus:outline-none focus:border-primary"
           />
-          <select className="bg-surface-container-low border border-outline-variant text-on-surface rounded-lg px-4 py-2 focus:outline-none focus:border-primary">
-            <option>All Categories</option>
-            <option>Income</option>
-            <option>Food</option>
-            <option>Utilities</option>
-            <option>Transport</option>
+          <select 
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="bg-surface-container-low border border-outline-variant text-on-surface rounded-lg px-4 py-2 focus:outline-none focus:border-primary"
+          >
+            <option value="all">All Categories</option>
+            {getCategories().map(category => (
+              <option key={category} value={category}>{category}</option>
+            ))}
           </select>
         </div>
       </Card>
@@ -194,24 +227,32 @@ const Transactions: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {transactions.map((transaction) => (
-                <tr key={transaction.id} className="border-b border-outline-variant hover:bg-surface-container-low">
-                  <td className="py-4 px-4 font-body-md text-body-md text-on-surface">
-                    {transaction.date}
-                  </td>
-                  <td className="py-4 px-4 font-body-md text-body-md text-on-surface">
-                    {transaction.description}
-                  </td>
-                  <td className="py-4 px-4 font-body-md text-body-md text-on-surface-variant">
-                    {transaction.category}
-                  </td>
-                  <td className={`py-4 px-4 font-headline-md text-headline-md text-right ${
-                    transaction.amount > 0 ? 'text-secondary' : 'text-on-surface'
-                  }`}>
-                    {transaction.amount > 0 ? '+' : ''}{(typeof transaction.amount === 'number' ? transaction.amount : parseFloat(transaction.amount)).toFixed(2)}
+              {filteredTransactions.length > 0 ? (
+                filteredTransactions.map((transaction) => (
+                  <tr key={transaction.id} className="border-b border-outline-variant hover:bg-surface-container-low">
+                    <td className="py-4 px-4 font-body-md text-body-md text-on-surface">
+                      {transaction.date}
+                    </td>
+                    <td className="py-4 px-4 font-body-md text-body-md text-on-surface">
+                      {transaction.description}
+                    </td>
+                    <td className="py-4 px-4 font-body-md text-body-md text-on-surface-variant">
+                      {transaction.category}
+                    </td>
+                    <td className={`py-4 px-4 font-headline-md text-headline-md text-right ${
+                      transaction.amount > 0 ? 'text-secondary' : 'text-on-surface'
+                    }`}>
+                      {transaction.amount > 0 ? '+' : ''}{(typeof transaction.amount === 'number' ? transaction.amount : parseFloat(transaction.amount)).toFixed(2)}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={4} className="py-8 px-4 text-center text-on-surface-variant">
+                    <p className="font-body-md">No transactions found matching your search criteria.</p>
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>

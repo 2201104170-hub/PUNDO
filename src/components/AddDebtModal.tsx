@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
-import { Button, Input } from './index';
+import { Button } from './index';
 import { debtsApi } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
+import { getCountriesList, getCurrencySymbol } from '../utils/currency';
 
 interface AddDebtModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit?: (data: DebtFormData) => void | Promise<void>;
-  isLoading?: boolean;
 }
 
 interface DebtFormData {
@@ -17,14 +18,15 @@ interface DebtFormData {
   amount: string;
   interestRate: string;
   notes: string;
+  currency?: string;
 }
 
 const AddDebtModal: React.FC<AddDebtModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
-  isLoading = false,
 }) => {
+  const { currency } = useAuth();
   const [formData, setFormData] = useState<DebtFormData>({
     creditor: '',
     type: 'I Owe',
@@ -32,6 +34,7 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
     amount: '',
     interestRate: '',
     notes: '',
+    currency: currency,
   });
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [loading, setLoading] = useState(false);
@@ -74,6 +77,7 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
             amount: '',
             interestRate: '',
             notes: '',
+            currency: currency,
           });
           setMessage(null);
           onClose();
@@ -154,25 +158,41 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
         <div className="grid grid-cols-2 gap-md">
           <div>
             <label className="font-label-md text-label-md text-on-surface-variant mb-sm block">
-              Amount
+              Amount (OPTIONAL CURRENCY)
             </label>
-            <div className="flex items-center gap-sm">
-              <span className="text-on-surface font-headline-md">$</span>
-              <input
-                type="number"
-                name="amount"
-                value={formData.amount}
-                onChange={handleInputChange}
-                placeholder="0.00"
-                step="0.01"
-                required
-                className="flex-1 bg-surface-container-low border border-outline-variant text-on-surface rounded-lg px-md py-sm focus:outline-none focus:border-primary"
-              />
+            <div className="space-y-xs">
+              <div className="flex gap-sm items-end">
+                <select
+                  name="currency"
+                  value={formData.currency}
+                  onChange={handleInputChange}
+                  className="bg-surface-container-low border border-outline-variant text-on-surface rounded-lg px-md py-sm focus:outline-none focus:border-primary"
+                >
+                  {getCountriesList().map((country) => (
+                    <option key={country.code} value={country.code}>
+                      {country.flag} {country.code} ({country.symbol})
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  name="amount"
+                  value={formData.amount}
+                  onChange={handleInputChange}
+                  placeholder="0.00"
+                  step="0.01"
+                  required
+                  className="flex-1 bg-surface-container-low border border-outline-variant text-on-surface rounded-lg px-md py-sm focus:outline-none focus:border-primary"
+                />
+              </div>
+              <p className="font-label-sm text-label-sm text-on-surface-variant">
+                Your default: {getCurrencySymbol(currency)} ({currency})
+              </p>
             </div>
           </div>
           <div>
             <label className="font-label-md text-label-md text-on-surface-variant mb-sm block">
-              Interest Rate (%)
+              Interest Rate (%) [Optional]
             </label>
             <input
               type="number"
@@ -181,7 +201,6 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
               onChange={handleInputChange}
               placeholder="0.00"
               step="0.01"
-              required
               className="w-full bg-surface-container-low border border-outline-variant text-on-surface rounded-lg px-md py-sm focus:outline-none focus:border-primary"
             />
           </div>

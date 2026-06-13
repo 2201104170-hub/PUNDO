@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Input } from '../components';
 import { useAuth } from '../contexts/AuthContext';
+import { getCountriesList } from '../utils/currency';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [country, setCountry] = useState('US');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -16,7 +18,7 @@ const Login: React.FC = () => {
     setError('');
     
     // Simple validation
-    if (!email || !password) {
+    if (!email || !password || !country) {
       setError('Please fill in all fields');
       return;
     }
@@ -90,6 +92,28 @@ const Login: React.FC = () => {
                   Forgot password?
                 </a>
               </div>
+            </div>
+
+            {/* Country & Currency Selection */}
+            <div>
+              <label className="font-label-md text-label-md text-on-surface-variant mb-2 block">
+                Your Country & Currency
+              </label>
+              <select
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+                className="w-full bg-surface-container-low border border-outline-variant text-on-surface rounded-lg px-4 py-3 focus:outline-none focus:border-primary"
+              >
+                <option value="">Select your country...</option>
+                {getCountriesList().map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.flag} {c.name} ({c.code} - {c.symbol})
+                  </option>
+                ))}
+              </select>
+              <p className="font-label-sm text-label-sm text-on-surface-variant mt-1">
+                Your preferred currency will be used throughout the app
+              </p>
             </div>
 
             <Button
