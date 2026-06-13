@@ -285,3 +285,83 @@ export const debtsApi = {
     }
   },
 };
+
+// Reports API
+export const reportsApi = {
+  async getFinancialMetrics(period: 'daily' | 'weekly' | 'monthly' | 'yearly' = 'monthly'): Promise<ApiResponse<any>> {
+    try {
+      const token = localStorage.getItem('auth_token') || 'test_token';
+      if (!token) {
+        return {
+          success: false,
+          error: 'Authentication required',
+        };
+      }
+
+      const response = await fetch(`${API_URL}/analytics/metrics?period=${period}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch metrics');
+      }
+
+      const result = await response.json();
+      return {
+        success: true,
+        data: result.data || result,
+      };
+    } catch (error) {
+      console.error('Reports API error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Network error',
+      };
+    }
+  },
+
+  async getTransactionReport(period: 'daily' | 'weekly' | 'monthly' | 'yearly' = 'monthly'): Promise<ApiResponse<any[]>> {
+    try {
+      const token = localStorage.getItem('auth_token') || 'test_token';
+      if (!token) {
+        return {
+          success: false,
+          error: 'Authentication required',
+          data: [],
+        };
+      }
+
+      const response = await fetch(`${API_URL}/transactions?limit=100&offset=0`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch transactions');
+      }
+
+      const result = await response.json();
+      const transactions = (result.data || [])
+        .map((transaction: any) => ({
+          ...transaction,
+          amount: parseFloat(transaction.amount),
+        }))
+        .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      return {
+        success: true,
+        data: transactions,
+      };
+    } catch (error) {
+      console.error('Transaction Report API error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Network error',
+        data: [],
+      };
+    }
+  },
+};

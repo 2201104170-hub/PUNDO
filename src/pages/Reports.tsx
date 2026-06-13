@@ -1,11 +1,42 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { Card, Button } from '../components';
 import { NavItem } from '../types';
+import { reportsApi } from '../services/api';
+
+interface Transaction {
+  id: string;
+  date: string;
+  description: string;
+  category: string;
+  amount: number;
+}
+
+interface FinancialMetrics {
+  totalNetFlow: number;
+  monthlyChange: number;
+  topExpenseCategory: string;
+  topExpenseAmount: number;
+  topExpensePercentage: number;
+  savingsRate: number;
+  savingsTarget: number;
+}
 
 const Reports: React.FC = () => {
   const navigate = useNavigate();
+  const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('monthly');
+  const [metrics, setMetrics] = useState<FinancialMetrics>({
+    totalNetFlow: 0,
+    monthlyChange: 0,
+    topExpenseCategory: 'N/A',
+    topExpenseAmount: 0,
+    topExpensePercentage: 0,
+    savingsRate: 0,
+    savingsTarget: 30,
+  });
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const navItems: NavItem[] = [
     { id: '1', label: 'Dashboard', icon: 'dashboard', path: '/dashboard' },
@@ -15,6 +46,83 @@ const Reports: React.FC = () => {
     { id: '5', label: 'Analytics', icon: 'analytics', path: '/analytics' },
     { id: '6', label: 'Settings', icon: 'settings', path: '/settings' },
   ];
+
+  // Fetch data when period changes
+  useEffect(() => {
+    fetchReportData();
+  }, [period]);
+
+  const fetchReportData = async () => {
+    setIsLoading(true);
+    try {
+      const [metricsResponse, transactionsResponse] = await Promise.all([
+        reportsApi.getFinancialMetrics(period),
+        reportsApi.getTransactionReport(period),
+      ]);
+
+      if (metricsResponse.success && metricsResponse.data) {
+        setMetrics(calculateMetrics(transactionsResponse.data || []));
+      }
+
+      if (transactionsResponse.success && transactionsResponse.data) {
+        setTransactions(transactionsResponse.data);
+      }
+    } catch (error) {
+      console.error('Error fetching report data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const calculateMetrics = (txns: Transaction[]) => {
+    let totalIncome = 0;
+    let totalExpense = 0;
+    const categoryExpenses: { [key: string]: number } = {};
+
+    txns.forEach((tx) => {
+      if (tx.amount > 0) {
+        totalIncome += tx.amount;
+      } else {
+        totalExpense += Math.abs(tx.amount);
+        categoryExpenses[tx.category] = (categoryExpenses[tx.category] || 0) + Math.abs(tx.amount);
+      }
+    });
+
+    const topCategory = Object.entries(categoryExpenses).sort(([, a], [, b]) => b - a)[0];
+    const netFlow = totalIncome - totalExpense;
+    const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpense) / totalIncome) * 100 : 0;
+
+    return {
+      totalNetFlow: netFlow,
+      monthlyChange: 14.2, // This would come from comparing periods
+      topExpenseCategory: topCategory ? topCategory[0] : 'N/A',
+      topExpenseAmount: topCategory ? topCategory[1] : 0,
+      topExpensePercentage: totalExpense > 0 && topCategory ? (topCategory[1] / totalExpense) * 100 : 0,
+      savingsRate: savingsRate,
+      savingsTarget: 30,
+    };
+  };
+
+  const handleExport = () => {
+    const csvContent = [
+      ['Date', 'Category', 'Amount'],
+      ...transactions.map((tx) => [
+        tx.date,
+        tx.category,
+        (tx.amount > 0 ? '+' : '') + tx.amount.toFixed(2),
+      ]),
+    ]
+      .map((row) => row.join(','))
+      .join('\n');
+
+    const element = document.createElement('a');
+    element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent));
+    element.setAttribute('download', `financial-report-${period}-${new Date().toISOString().split('T')[0]}.csv`);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  };
 
   return (
     <DashboardLayout
@@ -32,7 +140,7 @@ const Reports: React.FC = () => {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="secondary" size="md">
+          <Button variant="secondary" size="md" onClick={handleExport}>
             <span className="material-symbols-outlined text-[18px]">download</span>
             Export
           </Button>
@@ -42,18 +150,22 @@ const Reports: React.FC = () => {
       {/* Date Range Selector */}
       <Card className="mb-8">
         <div className="flex gap-2">
-          {['Daily', 'Weekly', 'Monthly', 'Yearly'].map((period) => (
-            <button
-              key={period}
-              className={`px-4 py-2 rounded-lg font-label-md text-label-md transition-all ${
-                period === 'Monthly'
-                  ? 'bg-surface-container-highest text-on-surface'
-                  : 'bg-surface-container-low text-on-surface-variant hover:text-on-surface'
-              }`}
-            >
-              {period}
-            </button>
-          ))}
+          {(['Daily', 'Weekly', 'Monthly', 'Yearly'] as const).map((p) => {
+            const periodValue = p.toLowerCase() as 'daily' | 'weekly' | 'monthly' | 'yearly';
+            return (
+              <button
+                key={p}
+                onClick={() => setPeriod(periodValue)}
+                className={`px-4 py-2 rounded-lg font-label-md text-label-md transition-all ${
+                  period === periodValue
+                    ? 'bg-surface-container-highest text-on-surface'
+                    : 'bg-surface-container-low text-on-surface-variant hover:text-on-surface'
+                }`}
+              >
+                {p}
+              </button>
+            );
+          })}
         </div>
       </Card>
 
@@ -63,11 +175,11 @@ const Reports: React.FC = () => {
           <h3 className="font-label-md text-label-md text-on-surface-variant uppercase mb-2">
             Total Net Flow
           </h3>
-          <p className="font-numeric-display text-numeric-display text-primary">
-            +$12,450.00
+          <p className={`font-numeric-display text-numeric-display ${metrics.totalNetFlow >= 0 ? 'text-primary' : 'text-error'}`}>
+            {metrics.totalNetFlow >= 0 ? '+' : ''}{metrics.totalNetFlow.toFixed(2)}
           </p>
           <p className="font-label-md text-label-md text-secondary mt-2">
-            ↑ 14.2% vs last month
+            ↑ {metrics.monthlyChange.toFixed(1)}% vs last month
           </p>
         </Card>
 
@@ -76,15 +188,18 @@ const Reports: React.FC = () => {
             Top Expense Category
           </h3>
           <p className="font-headline-md text-headline-md text-on-surface">
-            Housing & Utilities
+            {metrics.topExpenseCategory}
           </p>
           <div className="mt-4">
             <div className="flex justify-between mb-2 text-sm">
-              <span>$3,200.00</span>
-              <span>45%</span>
+              <span>${metrics.topExpenseAmount.toFixed(2)}</span>
+              <span>{metrics.topExpensePercentage.toFixed(0)}%</span>
             </div>
             <div className="w-full bg-surface-container rounded-full h-2">
-              <div className="bg-tertiary h-2 rounded-full" style={{ width: '45%' }}></div>
+              <div
+                className="bg-tertiary h-2 rounded-full"
+                style={{ width: `${metrics.topExpensePercentage}%` }}
+              ></div>
             </div>
           </div>
         </Card>
@@ -94,12 +209,15 @@ const Reports: React.FC = () => {
             Savings Rate
           </h3>
           <p className="font-numeric-display text-numeric-display text-primary">
-            28.5%
+            {metrics.savingsRate.toFixed(1)}%
           </p>
           <div className="mt-4">
-            <p className="text-sm text-on-surface-variant mb-2">Target: 30%</p>
+            <p className="text-sm text-on-surface-variant mb-2">Target: {metrics.savingsTarget}%</p>
             <div className="w-full bg-surface-container rounded-full h-2">
-              <div className="bg-primary h-2 rounded-full" style={{ width: '95%' }}></div>
+              <div
+                className="bg-primary h-2 rounded-full"
+                style={{ width: `${Math.min(metrics.savingsRate, 100)}%` }}
+              ></div>
             </div>
           </div>
         </Card>
@@ -107,34 +225,50 @@ const Reports: React.FC = () => {
 
       {/* Detailed Report */}
       <Card title="Transaction Breakdown">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-outline-variant">
-                <th className="text-left py-4 px-4 font-label-md text-label-md text-on-surface-variant">Date</th>
-                <th className="text-left py-4 px-4 font-label-md text-label-md text-on-surface-variant">Category</th>
-                <th className="text-right py-4 px-4 font-label-md text-label-md text-on-surface-variant">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                { date: '2024-01-15', category: 'Income', amount: 4500 },
-                { date: '2024-01-14', category: 'Food', amount: -125.50 },
-                { date: '2024-01-13', category: 'Utilities', amount: -89.00 },
-              ].map((row, idx) => (
-                <tr key={idx} className="border-b border-outline-variant hover:bg-surface-container-low">
-                  <td className="py-4 px-4 font-body-md text-body-md">{row.date}</td>
-                  <td className="py-4 px-4 font-body-md text-body-md">{row.category}</td>
-                  <td className={`py-4 px-4 font-headline-md text-right ${
-                    row.amount > 0 ? 'text-secondary' : 'text-on-surface'
-                  }`}>
-                    {row.amount > 0 ? '+' : ''}{row.amount.toFixed(2)}
-                  </td>
+        {isLoading ? (
+          <div className="text-center py-8 text-on-surface-variant">Loading transactions...</div>
+        ) : transactions.length === 0 ? (
+          <div className="text-center py-8 text-on-surface-variant">No transactions available for this period.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-outline-variant">
+                  <th className="text-left py-4 px-4 font-label-md text-label-md text-on-surface-variant">
+                    Date
+                  </th>
+                  <th className="text-left py-4 px-4 font-label-md text-label-md text-on-surface-variant">
+                    Category
+                  </th>
+                  <th className="text-right py-4 px-4 font-label-md text-label-md text-on-surface-variant">
+                    Amount
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {transactions.slice(0, 20).map((row) => (
+                  <tr key={row.id} className="border-b border-outline-variant hover:bg-surface-container-low">
+                    <td className="py-4 px-4 font-body-md text-body-md">
+                      {new Date(row.date).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                      })}
+                    </td>
+                    <td className="py-4 px-4 font-body-md text-body-md">{row.category}</td>
+                    <td
+                      className={`py-4 px-4 font-headline-md text-right ${
+                        row.amount > 0 ? 'text-secondary' : 'text-on-surface'
+                      }`}
+                    >
+                      {row.amount > 0 ? '+' : ''}{row.amount.toFixed(2)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </Card>
     </DashboardLayout>
   );
