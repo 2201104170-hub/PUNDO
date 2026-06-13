@@ -365,3 +365,153 @@ export const reportsApi = {
     }
   },
 };
+
+// Analytics API
+export const analyticsApi = {
+  async getAnalyticsData(): Promise<ApiResponse<any>> {
+    try {
+      const token = localStorage.getItem('auth_token') || 'test_token';
+      if (!token) {
+        return {
+          success: false,
+          error: 'Authentication required',
+        };
+      }
+
+      const response = await fetch(`${API_URL}/analytics`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch analytics data');
+      }
+
+      const result = await response.json();
+      return {
+        success: true,
+        data: result,
+      };
+    } catch (error) {
+      console.error('Analytics API error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Network error',
+      };
+    }
+  },
+
+  async getSpendingByCategory(): Promise<ApiResponse<any[]>> {
+    try {
+      const token = localStorage.getItem('auth_token') || 'test_token';
+      if (!token) {
+        return {
+          success: false,
+          error: 'Authentication required',
+          data: [],
+        };
+      }
+
+      const response = await fetch(`${API_URL}/analytics/spending-by-category`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch spending by category');
+      }
+
+      const result = await response.json();
+      return {
+        success: true,
+        data: result.data || [],
+      };
+    } catch (error) {
+      console.error('Spending by category API error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Network error',
+        data: [],
+      };
+    }
+  },
+
+  async getMonthlyTrends(months: number = 6): Promise<ApiResponse<any[]>> {
+    try {
+      const token = localStorage.getItem('auth_token') || 'test_token';
+      if (!token) {
+        return {
+          success: false,
+          error: 'Authentication required',
+          data: [],
+        };
+      }
+
+      const response = await fetch(`${API_URL}/analytics/monthly-trends?months=${months}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch monthly trends');
+      }
+
+      const result = await response.json();
+      return {
+        success: true,
+        data: result.data || [],
+      };
+    } catch (error) {
+      console.error('Monthly trends API error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Network error',
+        data: [],
+      };
+    }
+  },
+
+  async getAllTransactions(): Promise<ApiResponse<any[]>> {
+    try {
+      const token = localStorage.getItem('auth_token') || 'test_token';
+      if (!token) {
+        return {
+          success: false,
+          error: 'Authentication required',
+          data: [],
+        };
+      }
+
+      const response = await fetch(`${API_URL}/transactions?limit=500&offset=0`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch transactions');
+      }
+
+      const result = await response.json();
+      const transactions = (result.data || []).map((transaction: any) => ({
+        ...transaction,
+        amount: parseFloat(transaction.amount),
+      }));
+
+      return {
+        success: true,
+        data: transactions,
+      };
+    } catch (error) {
+      console.error('Transactions API error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Network error',
+        data: [],
+      };
+    }
+  },
+};
