@@ -29,7 +29,7 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
   const { currency } = useAuth();
   const [formData, setFormData] = useState<DebtFormData>({
     creditor: '',
-    type: 'I Owe',
+    type: 'i_owe',
     dueDate: '',
     amount: '',
     interestRate: '',
@@ -72,7 +72,7 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
         setTimeout(() => {
           setFormData({
             creditor: '',
-            type: 'I Owe',
+            type: 'i_owe',
             dueDate: '',
             amount: '',
             interestRate: '',
@@ -135,8 +135,8 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
               required
               className="w-full bg-surface-container-low border border-outline-variant text-on-surface rounded-lg px-md py-sm focus:outline-none focus:border-primary"
             >
-              <option value="I Owe">I Owe</option>
-              <option value="They Owe Me">They Owe Me</option>
+              <option value="i_owe">I Owe</option>
+              <option value="they_owe_me">They Owe Me</option>
             </select>
           </div>
           <div>

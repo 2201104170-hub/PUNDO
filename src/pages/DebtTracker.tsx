@@ -13,7 +13,20 @@ interface Debt {
   dueDate: string;
   status: string;
   remainingBalance?: number;
+  type: string;
 }
+
+// Helper function to format debt type for display
+const formatDebtType = (type: string): string => {
+  switch (type) {
+    case 'i_owe':
+      return 'I Owe';
+    case 'they_owe_me':
+      return 'They Owe Me';
+    default:
+      return type;
+  }
+};
 
 const DebtTracker: React.FC = () => {
   const navigate = useNavigate();
@@ -167,9 +180,14 @@ const DebtTracker: React.FC = () => {
                   <h4 className="font-headline-md text-headline-md text-on-surface">
                     {debt.creditor}
                   </h4>
-                  <span className="font-label-md text-label-md bg-primary-container/20 text-primary px-3 py-1 rounded-full">
-                    {debt.status}
+                  <div className="flex gap-2">
+                    <span className="font-label-md text-label-md bg-secondary-container/20 text-secondary px-3 py-1 rounded-full">
+                      {formatDebtType(debt.type)}
+                    </span>
+                    <span className="font-label-md text-label-md bg-primary-container/20 text-primary px-3 py-1 rounded-full">
+                      {debt.status}
                   </span>
+                  </div>
                 </div>
                 <div className="grid grid-cols-3 gap-4 text-sm">
                   <div>
