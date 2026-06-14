@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { Card, Button, AddDebtModal } from '../components';
 import { NavItem } from '../types';
-import { debtsApi } from '../services/api';
+import { debtApi } from '../services/api';
 
 interface Debt {
   id: string;
@@ -21,7 +21,7 @@ const DebtTracker: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(searchParams.get('modal') === 'add');
   const [debts, setDebts] = useState<Debt[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
 
   const navItems: NavItem[] = [
     { id: '1', label: 'Dashboard', icon: 'dashboard', path: '/dashboard' },
@@ -37,9 +37,10 @@ const DebtTracker: React.FC = () => {
     const fetchDebts = async () => {
       setIsLoading(true);
       try {
-        const response = await debtsApi.getAll();
+        const response = await debtApi.getAll();
         if (response.success && response.data) {
-          setDebts(response.data);
+          const debtsData = Array.isArray(response.data) ? response.data : response.data.data || [];
+          setDebts(debtsData);
         }
       } catch (error) {
         console.error('Error fetching debts:', error);
@@ -52,11 +53,11 @@ const DebtTracker: React.FC = () => {
   }, []);
 
   // Calculate summary statistics
-  const totalDebt = debts.reduce((sum, debt) => sum + debt.amount, 0);
+  const totalDebt = Array.isArray(debts) ? debts.reduce((sum, debt) => sum + (typeof debt.amount === 'number' ? debt.amount : parseFloat(debt.amount || 0)), 0) : 0;
   const averageInterestRate =
-    debts.length > 0 ? debts.reduce((sum, debt) => sum + debt.interestRate, 0) / debts.length : 0;
+    Array.isArray(debts) && debts.length > 0 ? debts.reduce((sum, debt) => sum + (typeof debt.interestRate === 'number' ? debt.interestRate : parseFloat(debt.interestRate || 0)), 0) / debts.length : 0;
   
-  const nextPaymentDue = debts.length > 0
+  const nextPaymentDue = Array.isArray(debts) && debts.length > 0
     ? debts.reduce((closest, debt) => {
         const debtDate = new Date(debt.dueDate).getTime();
         const closestDate = new Date(closest.dueDate).getTime();
@@ -72,14 +73,15 @@ const DebtTracker: React.FC = () => {
   const handleCloseModal = () => {
     setShowAddModal(false);
     navigate('/debt-tracker');
-    setMessage(null);
+
   };
 
-  const handleSubmitDebt = async (data: any) => {
+  const handleSubmitDebt = async (_data: any) => {
     // Refresh debts after successful submission
-    const response = await debtsApi.getAll();
+    const response = await debtApi.getAll();
     if (response.success && response.data) {
-      setDebts(response.data);
+      const debtsData = Array.isArray(response.data) ? response.data : response.data.data || [];
+      setDebts(debtsData);
     }
   };
 

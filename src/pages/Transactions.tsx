@@ -3,8 +3,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { Card, Button, AddTransactionModal } from '../components';
 import { NavItem } from '../types';
-import { transactionsApi } from '../services/api';
-import { transactionActions } from '../services/transactionActions';
+
+import { transactionsApi, transactionActions } from '../services/api';
+import { isPositiveTransactionType } from '../types';
 
 interface Transaction {
   id: string;
@@ -314,9 +315,9 @@ const Transactions: React.FC = () => {
                       {transaction.category}
                     </td>
                     <td className={`py-4 px-4 font-headline-md text-headline-md text-right ${
-                      transaction.amount > 0 ? 'text-secondary' : 'text-on-surface'
+                      isPositiveTransactionType(transaction.type as any) ? 'text-secondary' : 'text-on-surface'
                     }`}>
-                      {transaction.amount > 0 ? '+' : ''}{(typeof transaction.amount === 'number' ? transaction.amount : parseFloat(transaction.amount)).toFixed(2)}
+                      {isPositiveTransactionType(transaction.type as any) ? '+' : '-'}{Math.abs(typeof transaction.amount === 'number' ? transaction.amount : parseFloat(transaction.amount)).toFixed(2)}
                     </td>
                     <td className="py-4 px-4 text-center">
                       {transaction.isPaid ? (

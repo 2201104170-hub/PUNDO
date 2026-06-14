@@ -28,22 +28,28 @@ export interface Transaction {
 }
 
 export const TRANSACTION_TYPE_OPTIONS = [
-  { value: 'income', label: 'Income', icon: 'trending_up', color: 'text-green-600' },
-  { value: 'expense', label: 'Expense', icon: 'trending_down', color: 'text-red-600' },
-  { value: 'debt_payment', label: 'Debt Payment', icon: 'payment', color: 'text-blue-600' },
-  { value: 'debt_received', label: 'Debt Received', icon: 'download', color: 'text-green-600' },
-  { value: 'money_lent', label: 'Money Lent', icon: 'upload', color: 'text-orange-600' },
-  { value: 'debt_collected', label: 'Debt Collected', icon: 'attach_money', color: 'text-green-600' },
-  { value: 'savings_deposit', label: 'Savings Deposit', icon: 'savings', color: 'text-blue-600' },
-  { value: 'savings_withdrawal', label: 'Savings Withdrawal', icon: 'withdraw', color: 'text-red-600' },
+  { value: 'income', label: 'Income', icon: 'trending_up', color: 'text-green-600', isPositive: true },
+  { value: 'expense', label: 'Expense', icon: 'trending_down', color: 'text-red-600', isPositive: false },
+  { value: 'debt_payment', label: 'Debt Payment', icon: 'payment', color: 'text-blue-600', isPositive: false },
+  { value: 'debt_received', label: 'Debt Received', icon: 'download', color: 'text-green-600', isPositive: true },
+  { value: 'money_lent', label: 'Money Lent', icon: 'upload', color: 'text-orange-600', isPositive: false },
+  { value: 'debt_collected', label: 'Debt Collected', icon: 'attach_money', color: 'text-green-600', isPositive: true },
+  { value: 'savings_deposit', label: 'Savings Deposit', icon: 'savings', color: 'text-blue-600', isPositive: true },
+  { value: 'savings_withdrawal', label: 'Savings Withdrawal', icon: 'withdraw', color: 'text-red-600', isPositive: false },
 ];
 
+// Helper function to determine if transaction type should be positive
+export const isPositiveTransactionType = (type: TransactionType): boolean => {
+  const typeOption = TRANSACTION_TYPE_OPTIONS.find(t => t.value === type);
+  return typeOption?.isPositive ?? false;
+};
+
 export const TRANSACTION_CATEGORIES: Record<string, string[]> = {
-  income: ['Salary', 'Freelance', 'Bonus', 'Investment Income', 'Refund', 'Gift', 'Interest'],
-  expense: ['Groceries', 'Utilities', 'Rent/Mortgage', 'Dining', 'Transportation', 'Entertainment', 'Healthcare', 'Subscription', 'Shopping', 'Other'],
+  income: ['Salary', 'Freelance', 'Bonus', 'Investment Income', 'Refund', 'Gift Received', 'Interest', 'Coins Out'],
+  expense: ['Groceries', 'Utilities', 'Rent/Mortgage', 'Dining', 'Transportation', 'Entertainment', 'Healthcare', 'Subscription', 'Shopping', 'Gift Given', 'Other'],
   debt_payment: ['Loan Payment', 'Credit Card Payment', 'Personal Debt', 'Medical Debt'],
-  debt_received: ['Loan Received', 'Credit', 'Advance', 'Borrowed Amount'],
-  money_lent: ['Personal Loan', 'Advance Given', 'Investment'],
+  debt_received: ['Personal Loan', 'Credit', 'Advance', 'Borrowed Amount'],
+  money_lent: ['Personal Loan Given', 'Advance Given', 'Investment'],
   debt_collected: ['Loan Returned', 'Debt Settled', 'Repayment'],
   savings_deposit: ['Savings Account', 'Investment Fund', 'Emergency Fund'],
   savings_withdrawal: ['Savings Withdrawal', 'Fund Transfer', 'Investment Liquidation'],

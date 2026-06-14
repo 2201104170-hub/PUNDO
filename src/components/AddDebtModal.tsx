@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
 import { Button } from './index';
-import { debtsApi } from '../services/api';
+import { debtApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { getCountriesList, getCurrencySymbol } from '../utils/currency';
 
@@ -55,7 +55,7 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
     setMessage(null);
 
     try {
-      const response = await debtsApi.create(formData);
+      const response = await debtApi.create(formData);
 
       if (response.success) {
         setMessage({

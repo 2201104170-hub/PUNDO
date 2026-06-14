@@ -1,3 +1,5 @@
+import { isPositiveTransactionType } from '../types';
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 interface TransactionPayload {
@@ -44,6 +46,10 @@ export const transactionsApi = {
         };
       }
 
+      // Apply sign based on transaction type
+      const isPositive = isPositiveTransactionType(data.type as any);
+      const signedAmount = isPositive ? amount : -amount;
+
       const response = await fetch(`${API_URL}/transactions`, {
         method: 'POST',
         headers: {
@@ -55,7 +61,7 @@ export const transactionsApi = {
           type: data.type,
           category: data.category,
           description: data.description,
-          amount: amount,
+          amount: signedAmount,
           currency: data.currency || 'PHP',
           status: 'completed',
         }),
@@ -126,96 +132,65 @@ export const transactionsApi = {
   },
 };
 
-// Auth API
-export const authApi = {
-  async getUser(): Promise<ApiResponse<any>> {
+export const transactionActions = {
+  async delete(id: string): Promise<ApiResponse<any>> {
     try {
       const token = localStorage.getItem('auth_token');
       if (!token) {
         return {
           success: false,
-          error: 'No authentication token found',
+          error: 'Authentication required',
         };
       }
 
-      const response = await fetch(`${API_URL}/auth/me`, {
+      const response = await fetch(`${API_URL}/transactions/${id}`, {
+        method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
       if (!response.ok) {
-        localStorage.removeItem('auth_token');
+        const errorData = await response.json();
         return {
           success: false,
-          error: 'Session expired',
+          error: errorData.error || 'Failed to delete transaction',
         };
       }
 
-      const result = await response.json();
       return {
         success: true,
-        data: result,
+        message: 'Transaction deleted successfully',
       };
     } catch (error) {
-      console.error('Auth API error:', error);
+      console.error('Delete transaction error:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Network error',
       };
     }
   },
-};
 
-// Debts API
-export const debtsApi = {
-  async create(data: {
-    creditor: string;
-    amount: string;
-    interestRate: string;
-    dueDate: string;
-    type: string;
-    notes?: string;
-  }): Promise<ApiResponse<any>> {
+  async markAsPaid(id: string, isPaid: boolean, hasReceipt: boolean = false, receiptNote: string = ''): Promise<ApiResponse<any>> {
     try {
-      if (!data.creditor || !data.amount || !data.interestRate || !data.dueDate || !data.type) {
-        return {
-          success: false,
-          error: 'Please fill in all required fields',
-        };
-      }
-
-      const amount = parseFloat(data.amount);
-      if (isNaN(amount) || amount <= 0) {
-        return {
-          success: false,
-          error: 'Amount must be a valid number greater than 0',
-        };
-      }
-
-      const token = localStorage.getItem('auth_token') || 'test_token';
+      const token = localStorage.getItem('auth_token');
       if (!token) {
         return {
           success: false,
-          error: 'Authentication required. Please log in.',
+          error: 'Authentication required',
         };
       }
 
-      const response = await fetch(`${API_URL}/debts`, {
-        method: 'POST',
+      const response = await fetch(`${API_URL}/transactions/${id}/payment-status`, {
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          creditor: data.creditor,
-          amount: amount,
-          remainingBalance: amount,
-          interestRate: parseFloat(data.interestRate),
-          dueDate: new Date(data.dueDate).toISOString(),
-          type: data.type === 'I Owe' ? 'i_owe' : 'they_owe_me',
-          status: 'active',
-          notes: data.notes || null,
+          isPaid,
+          hasReceipt,
+          receiptNote,
         }),
       });
 
@@ -223,144 +198,21 @@ export const debtsApi = {
         const errorData = await response.json();
         return {
           success: false,
-          error: errorData.message || errorData.error || 'Failed to save debt',
+          error: errorData.error || 'Failed to update payment status',
         };
       }
 
       const result = await response.json();
       return {
         success: true,
-        data: result,
-        message: 'Debt created successfully!',
+        data: result.transaction,
+        message: 'Payment status updated successfully',
       };
     } catch (error) {
-      console.error('Debt API error:', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Network error occurred',
-      };
-    }
-  },
-
-  async getAll(): Promise<ApiResponse<any[]>> {
-    try {
-      const token = localStorage.getItem('auth_token') || 'test_token';
-      if (!token) {
-        return {
-          success: false,
-          error: 'Authentication required',
-          data: [],
-        };
-      }
-
-      const response = await fetch(`${API_URL}/debts`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch debts');
-      }
-
-      const result = await response.json();
-      const debts = (result.data || []).map((debt: any) => ({
-        ...debt,
-        amount: parseFloat(debt.amount),
-        remainingBalance: parseFloat(debt.remaining_balance || debt.remainingBalance),
-        interestRate: parseFloat(debt.interest_rate || debt.interestRate),
-      }));
-
-      return {
-        success: true,
-        data: debts,
-      };
-    } catch (error) {
-      console.error('Debts API error:', error);
+      console.error('Mark as paid error:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Network error',
-        data: [],
-      };
-    }
-  },
-};
-
-// Reports API
-export const reportsApi = {
-  async getFinancialMetrics(period: 'daily' | 'weekly' | 'monthly' | 'yearly' = 'monthly'): Promise<ApiResponse<any>> {
-    try {
-      const token = localStorage.getItem('auth_token') || 'test_token';
-      if (!token) {
-        return {
-          success: false,
-          error: 'Authentication required',
-        };
-      }
-
-      const response = await fetch(`${API_URL}/analytics/metrics?period=${period}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch metrics');
-      }
-
-      const result = await response.json();
-      return {
-        success: true,
-        data: result.data || result,
-      };
-    } catch (error) {
-      console.error('Reports API error:', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Network error',
-      };
-    }
-  },
-
-  async getTransactionReport(period: 'daily' | 'weekly' | 'monthly' | 'yearly' = 'monthly'): Promise<ApiResponse<any[]>> {
-    try {
-      const token = localStorage.getItem('auth_token') || 'test_token';
-      if (!token) {
-        return {
-          success: false,
-          error: 'Authentication required',
-          data: [],
-        };
-      }
-
-      const response = await fetch(`${API_URL}/transactions?limit=100&offset=0`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch transactions');
-      }
-
-      const result = await response.json();
-      const transactions = (result.data || [])
-        .map((transaction: any) => ({
-          ...transaction,
-          amount: parseFloat(transaction.amount),
-        }))
-        .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-      return {
-        success: true,
-        data: transactions,
-      };
-    } catch (error) {
-      console.error('Transaction Report API error:', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Network error',
-        data: [],
       };
     }
   },
@@ -438,116 +290,202 @@ export const analyticsApi = {
       };
     }
   },
+};
 
-  async getSpendingByCategory(): Promise<ApiResponse<any[]>> {
+// Debt API
+export const debtApi = {
+  async create(data: any): Promise<ApiResponse<any>> {
     try {
       const token = localStorage.getItem('auth_token') || 'test_token';
       if (!token) {
         return {
           success: false,
           error: 'Authentication required',
-          data: [],
         };
       }
 
-      const response = await fetch(`${API_URL}/analytics/spending-by-category`, {
+      const response = await fetch(`${API_URL}/debts`, {
+        method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
+        body: JSON.stringify(data),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch spending by category');
+        const errorData = await response.json();
+        return {
+          success: false,
+          error: errorData.error || 'Failed to create debt',
+        };
       }
 
       const result = await response.json();
       return {
         success: true,
-        data: result.data || [],
+        data: result,
+        message: 'Debt created successfully',
       };
     } catch (error) {
-      console.error('Spending by category API error:', error);
+      console.error('Debt API error:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Network error',
-        data: [],
       };
     }
   },
 
-  async getMonthlyTrends(months: number = 6): Promise<ApiResponse<any[]>> {
+  async getAll(): Promise<ApiResponse<any>> {
     try {
       const token = localStorage.getItem('auth_token') || 'test_token';
       if (!token) {
         return {
           success: false,
           error: 'Authentication required',
-          data: [],
         };
       }
 
-      const response = await fetch(`${API_URL}/analytics/monthly-trends?months=${months}`, {
+      const response = await fetch(`${API_URL}/debts`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch monthly trends');
+        throw new Error('Failed to fetch debts');
       }
 
       const result = await response.json();
       return {
         success: true,
-        data: result.data || [],
+        data: result,
       };
     } catch (error) {
-      console.error('Monthly trends API error:', error);
+      console.error('Debt API error:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Network error',
-        data: [],
       };
     }
   },
+};
 
-  async getAllTransactions(): Promise<ApiResponse<any[]>> {
+// Reports API - uses transactions API for data
+export const reportsApi = {
+  async getFinancialMetrics(period: string = 'all'): Promise<ApiResponse<any>> {
     try {
       const token = localStorage.getItem('auth_token') || 'test_token';
       if (!token) {
         return {
           success: false,
           error: 'Authentication required',
-          data: [],
         };
       }
 
-      const response = await fetch(`${API_URL}/transactions?limit=500&offset=0`, {
+      // Get all transactions and calculate metrics
+      const response = await fetch(`${API_URL}/transactions`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch transactions');
+        throw new Error('Failed to fetch transactions for reports');
       }
 
       const result = await response.json();
-      const transactions = (result.data || []).map((transaction: any) => ({
-        ...transaction,
-        amount: parseFloat(transaction.amount),
-      }));
+      const transactions = result.data || [];
+
+      // Calculate financial metrics
+      let totalIncome = 0;
+      let totalExpense = 0;
+      const categoryExpenses: { [key: string]: number } = {};
+
+      transactions.forEach((tx: any) => {
+        if (tx.amount > 0) {
+          totalIncome += parseFloat(tx.amount);
+        } else {
+          const expenseAmount = Math.abs(parseFloat(tx.amount));
+          totalExpense += expenseAmount;
+          const category = tx.category || 'Other';
+          categoryExpenses[category] = (categoryExpenses[category] || 0) + expenseAmount;
+        }
+      });
+
+      const metrics = {
+        totalIncome,
+        totalExpense,
+        netCashFlow: totalIncome - totalExpense,
+        categoryExpenses,
+        transactionCount: transactions.length,
+        period,
+      };
+
+      return {
+        success: true,
+        data: metrics,
+      };
+    } catch (error) {
+      console.error('Reports API error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Network error',
+      };
+    }
+  },
+
+  async getTransactionReport(period: string = 'all'): Promise<ApiResponse<any>> {
+    try {
+      const token = localStorage.getItem('auth_token') || 'test_token';
+      if (!token) {
+        return {
+          success: false,
+          error: 'Authentication required',
+        };
+      }
+
+      const response = await fetch(`${API_URL}/transactions`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch transactions for reports');
+      }
+
+      const result = await response.json();
+      let transactions = result.data || [];
+      
+      // Filter transactions by period if needed
+      if (period !== 'all') {
+        const now = new Date();
+        const periodDate = new Date();
+        
+        if (period === 'month') {
+          periodDate.setMonth(now.getMonth() - 1);
+        } else if (period === 'week') {
+          periodDate.setDate(now.getDate() - 7);
+        } else if (period === 'year') {
+          periodDate.setFullYear(now.getFullYear() - 1);
+        }
+        
+        transactions = transactions.filter((tx: any) => {
+          const txDate = new Date(tx.date);
+          return txDate >= periodDate;
+        });
+      }
 
       return {
         success: true,
         data: transactions,
       };
     } catch (error) {
-      console.error('Transactions API error:', error);
+      console.error('Transaction report API error:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Network error',
-        data: [],
       };
     }
   },

@@ -4,6 +4,7 @@ import DashboardLayout from '../layouts/DashboardLayout';
 import { Button, DashboardCard, Card } from '../components';
 import { DashboardCard as DashboardCardType, NavItem } from '../types';
 import { dashboardApi } from '../services/api';
+import { isPositiveTransactionType } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 
 const Dashboard: React.FC = () => {
@@ -104,7 +105,7 @@ const Dashboard: React.FC = () => {
         const formattedTransactions = (txns || []).map((tx: any, idx: number) => ({
           id: tx.id || idx.toString(),
           description: tx.description || 'Transaction',
-          amount: tx.type === 'income' ? `+$${Math.abs(typeof tx.amount === 'number' ? tx.amount : parseFloat(tx.amount) || 0).toFixed(2)}` : `-$${Math.abs(typeof tx.amount === 'number' ? tx.amount : parseFloat(tx.amount) || 0).toFixed(2)}`,
+          amount: isPositiveTransactionType(tx.type as any) ? `+$${Math.abs(typeof tx.amount === 'number' ? tx.amount : parseFloat(tx.amount) || 0).toFixed(2)}` : `-$${Math.abs(typeof tx.amount === 'number' ? tx.amount : parseFloat(tx.amount) || 0).toFixed(2)}`,
           date: formatDate(new Date(tx.date)),
           category: tx.category || 'Other',
           type: tx.type || 'expense',
@@ -195,16 +196,16 @@ const Dashboard: React.FC = () => {
               >
                 <div className="flex items-center gap-3 flex-1">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    transaction.type === 'income'
+                    isPositiveTransactionType(transaction.type as any)
                       ? 'bg-secondary-container/20'
                       : 'bg-error-container/20'
                   }`}>
                     <span className={`material-symbols-outlined ${
-                      transaction.type === 'income'
+                      isPositiveTransactionType(transaction.type as any)
                         ? 'text-secondary'
                         : 'text-error'
                     }`}>
-                      {transaction.type === 'income' ? 'trending_up' : 'trending_down'}
+                      {isPositiveTransactionType(transaction.type as any) ? 'trending_up' : 'trending_down'}
                     </span>
                   </div>
                   <div>
@@ -218,7 +219,7 @@ const Dashboard: React.FC = () => {
                 </div>
                 <div className="text-right">
                   <p className={`font-body-md text-body-md font-semibold ${
-                    transaction.type === 'income' ? 'text-secondary' : 'text-error'
+                    isPositiveTransactionType(transaction.type as any) ? 'text-secondary' : 'text-error'
                   }`}>
                     {transaction.amount}
                   </p>

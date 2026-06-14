@@ -80,11 +80,12 @@ const Reports: React.FC = () => {
     const categoryExpenses: { [key: string]: number } = {};
 
     txns.forEach((tx) => {
-      if (tx.amount > 0) {
-        totalIncome += tx.amount;
+      const amount = typeof tx.amount === 'number' ? tx.amount : parseFloat(tx.amount);
+      if (amount > 0) {
+        totalIncome += amount;
       } else {
-        totalExpense += Math.abs(tx.amount);
-        categoryExpenses[tx.category] = (categoryExpenses[tx.category] || 0) + Math.abs(tx.amount);
+        totalExpense += Math.abs(amount);
+        categoryExpenses[tx.category] = (categoryExpenses[tx.category] || 0) + Math.abs(amount);
       }
     });
 
@@ -109,7 +110,7 @@ const Reports: React.FC = () => {
       ...transactions.map((tx) => [
         tx.date,
         tx.category,
-        (tx.amount > 0 ? '+' : '') + tx.amount.toFixed(2),
+        (tx.amount > 0 ? '+' : '') + (typeof tx.amount === 'number' ? tx.amount.toFixed(2) : parseFloat(tx.amount).toFixed(2)),
       ]),
     ]
       .map((row) => row.join(','))
@@ -226,47 +227,41 @@ const Reports: React.FC = () => {
       {/* Detailed Report */}
       <Card title="Transaction Breakdown">
         {isLoading ? (
-          <div className="text-center py-8 text-on-surface-variant">Loading transactions...</div>
-        ) : transactions.length === 0 ? (
-          <div className="text-center py-8 text-on-surface-variant">No transactions available for this period.</div>
-        ) : (
+          <div className="text-center py-8 text-on-surface-variant">
+            <p className="font-body-md">Loading report data...</p>
+          </div>
+        ) : transactions.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-outline-variant">
-                  <th className="text-left py-4 px-4 font-label-md text-label-md text-on-surface-variant">
-                    Date
-                  </th>
-                  <th className="text-left py-4 px-4 font-label-md text-label-md text-on-surface-variant">
-                    Category
-                  </th>
-                  <th className="text-right py-4 px-4 font-label-md text-label-md text-on-surface-variant">
-                    Amount
-                  </th>
+                  <th className="text-left py-4 px-4 font-label-md text-label-md text-on-surface-variant">Date</th>
+                  <th className="text-left py-4 px-4 font-label-md text-label-md text-on-surface-variant">Category</th>
+                  <th className="text-right py-4 px-4 font-label-md text-label-md text-on-surface-variant">Amount</th>
                 </tr>
               </thead>
               <tbody>
-                {transactions.slice(0, 20).map((row) => (
-                  <tr key={row.id} className="border-b border-outline-variant hover:bg-surface-container-low">
-                    <td className="py-4 px-4 font-body-md text-body-md">
-                      {new Date(row.date).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                      })}
+                {transactions.map((tx) => (
+                  <tr key={tx.id} className="border-b border-outline-variant hover:bg-surface-container-low">
+                    <td className="py-4 px-4 font-body-md text-body-md text-on-surface">
+                      {tx.date}
                     </td>
-                    <td className="py-4 px-4 font-body-md text-body-md">{row.category}</td>
-                    <td
-                      className={`py-4 px-4 font-headline-md text-right ${
-                        row.amount > 0 ? 'text-secondary' : 'text-on-surface'
-                      }`}
-                    >
-                      {row.amount > 0 ? '+' : ''}{row.amount.toFixed(2)}
+                    <td className="py-4 px-4 font-body-md text-body-md text-on-surface-variant">
+                      {tx.category}
+                    </td>
+                    <td className={`py-4 px-4 font-headline-md text-headline-md text-right ${
+                      tx.amount > 0 ? 'text-secondary' : 'text-on-surface'
+                    }`}>
+                      {tx.amount > 0 ? '+' : ''}{(typeof tx.amount === 'number' ? tx.amount : parseFloat(tx.amount)).toFixed(2)}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+        ) : (
+          <div className="text-center py-8 text-on-surface-variant">
+            <p className="font-body-md">No transactions found for the selected period.</p>
           </div>
         )}
       </Card>
