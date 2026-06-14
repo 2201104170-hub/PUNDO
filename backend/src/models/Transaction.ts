@@ -4,9 +4,9 @@ import { Transaction, TransactionRequest } from '../types/index.js';
 export class TransactionModel {
   static async create(userId: string, data: TransactionRequest): Promise<Transaction> {
     const query = `
-      INSERT INTO transactions (user_id, date, description, amount, category, type, status, currency, debt_id)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-      RETURNING id, user_id, date, description, amount, category, type, status, currency, debt_id, created_at, updated_at
+      INSERT INTO transactions (user_id, date, description, amount, category, type, status, currency, debt_id, is_paid, has_receipt, receipt_note)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      RETURNING id, user_id, date, description, amount, category, type, status, currency, debt_id, is_paid, has_receipt, receipt_note, created_at, updated_at
     `;
 
     const result = await pool.query(query, [
@@ -19,6 +19,9 @@ export class TransactionModel {
       data.status || 'completed',
       data.currency || 'PHP',
       data.debtId || null,
+      data.isPaid || false,
+      data.hasReceipt || false,
+      data.receiptNote || null,
     ]);
 
     return this.mapRow(result.rows[0]);
@@ -73,13 +76,25 @@ export class TransactionModel {
       fields.push(`status = $${paramCount++}`);
       values.push(data.status);
     }
+    if (data.isPaid !== undefined) {
+      fields.push(`is_paid = $${paramCount++}`);
+      values.push(data.isPaid);
+    }
+    if (data.hasReceipt !== undefined) {
+      fields.push(`has_receipt = $${paramCount++}`);
+      values.push(data.hasReceipt);
+    }
+    if (data.receiptNote !== undefined) {
+      fields.push(`receipt_note = $${paramCount++}`);
+      values.push(data.receiptNote);
+    }
 
     values.push(id, userId);
     const query = `
       UPDATE transactions
       SET ${fields.join(', ')}, updated_at = NOW()
       WHERE id = $${paramCount++} AND user_id = $${paramCount}
-      RETURNING id, user_id, date, description, amount, category, type, status, currency, created_at, updated_at
+      RETURNING id, user_id, date, description, amount, category, type, status, currency, debt_id, is_paid, has_receipt, receipt_note, created_at, updated_at
     `;
 
     const result = await pool.query(query, values);
@@ -114,6 +129,9 @@ export class TransactionModel {
       status: row.status,
       currency: row.currency,
       debtId: row.debt_id,
+      isPaid: row.is_paid,
+      hasReceipt: row.has_receipt,
+      receiptNote: row.receipt_note,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };

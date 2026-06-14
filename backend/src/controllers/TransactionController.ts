@@ -92,6 +92,32 @@ export class TransactionController {
     }
   }
 
+  static async markAsPaid(req: Request, res: Response) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const { id } = req.params;
+      const { isPaid, hasReceipt, receiptNote } = req.body;
+
+      const transaction = await TransactionModel.update(id, userId, {
+        isPaid,
+        hasReceipt,
+        receiptNote,
+      });
+
+      res.json({
+        message: 'Transaction payment status updated successfully',
+        transaction,
+      });
+    } catch (error) {
+      console.error('Mark as paid error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
   static async delete(req: Request, res: Response) {
     try {
       const userId = req.user?.id;

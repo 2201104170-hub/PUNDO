@@ -4,6 +4,7 @@ import DashboardLayout from '../layouts/DashboardLayout';
 import { Card, Button, AddTransactionModal } from '../components';
 import { NavItem } from '../types';
 import { transactionsApi } from '../services/api';
+import { transactionActions } from '../services/transactionActions';
 
 interface Transaction {
   id: string;
@@ -14,6 +15,9 @@ interface Transaction {
   type: string;
   status: string;
   currency?: string;
+  isPaid?: boolean;
+  hasReceipt?: boolean;
+  receiptNote?: string;
 }
 
 interface TransactionFormData {
@@ -29,17 +33,13 @@ const Transactions: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [showAddModal, setShowAddModal] = useState(searchParams.get('modal') === 'add');
-  const [transactions, setTransactions] = useState<Transaction[]>([
-    { id: '1', date: '2024-01-15', description: 'Salary Deposit', amount: 4500, category: 'Income', type: 'income', status: 'completed' },
-    { id: '2', date: '2024-01-14', description: 'Grocery Store', amount: -125.50, category: 'Food', type: 'expense', status: 'completed' },
-    { id: '3', date: '2024-01-13', description: 'Electric Bill', amount: -89.00, category: 'Utilities', type: 'expense', status: 'completed' },
-    { id: '4', date: '2024-01-12', description: 'Restaurant', amount: -45.30, category: 'Dining', type: 'expense', status: 'completed' },
-    { id: '5', date: '2024-01-11', description: 'Gas', amount: -52.00, category: 'Transport', type: 'expense', status: 'completed' },
-  ]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
 
   const navItems: NavItem[] = [
     { id: '1', label: 'Dashboard', icon: 'dashboard', path: '/dashboard' },
@@ -119,20 +119,11 @@ const Transactions: React.FC = () => {
           text: response.message || 'Transaction saved successfully!',
         });
 
-        // Add the new transaction to the list
-        const amount = data.type === 'income' ? parseFloat(data.amount) : -parseFloat(data.amount);
-        const newTransaction: Transaction = {
-          id: Date.now().toString(),
-          date: data.date,
-          type: data.type,
-          category: data.category,
-          description: data.description,
-          amount: amount,
-          currency: data.currency || 'PHP',
-          status: 'completed',
-        };
-
-        setTransactions((prev) => [newTransaction, ...prev]);
+        // Refresh transactions
+        const updatedResponse = await transactionsApi.getAll();
+        if (updatedResponse.success && updatedResponse.data) {
+          setTransactions(updatedResponse.data);
+        }
 
         // Close modal after 1.5 seconds
         setTimeout(() => {
@@ -151,6 +142,87 @@ const Transactions: React.FC = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this transaction?')) {
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await transactionActions.delete(id);
+      if (response.success) {
+        setMessage({
+          type: 'success',
+          text: 'Transaction deleted successfully',
+        });
+        // Refresh transactions
+        const updatedResponse = await transactionsApi.getAll();
+        if (updatedResponse.success && updatedResponse.data) {
+          setTransactions(updatedResponse.data);
+        }
+      } else {
+        setMessage({
+          type: 'error',
+          text: response.error || 'Failed to delete transaction',
+        });
+      }
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'An unexpected error occurred',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleMarkAsPaid = async (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setShowReceiptModal(true);
+  };
+
+  const handleConfirmPayment = async (hasReceipt: boolean, receiptNote: string) => {
+    if (!selectedTransaction) return;
+
+    setIsLoading(true);
+    try {
+      const response = await transactionActions.markAsPaid(
+        selectedTransaction.id,
+        !selectedTransaction.isPaid,
+        hasReceipt,
+        receiptNote
+      );
+      
+      if (response.success) {
+        setMessage({
+          type: 'success',
+          text: selectedTransaction.isPaid 
+            ? 'Transaction marked as unpaid' 
+            : 'Transaction marked as paid',
+        });
+        // Refresh transactions
+        const updatedResponse = await transactionsApi.getAll();
+        if (updatedResponse.success && updatedResponse.data) {
+          setTransactions(updatedResponse.data);
+        }
+      } else {
+        setMessage({
+          type: 'error',
+          text: response.error || 'Failed to update payment status',
+        });
+      }
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'An unexpected error occurred',
+      });
+    } finally {
+      setIsLoading(false);
+      setShowReceiptModal(false);
+      setSelectedTransaction(null);
     }
   };
 
@@ -224,6 +296,8 @@ const Transactions: React.FC = () => {
                 <th className="text-left py-4 px-4 font-label-md text-label-md text-on-surface-variant">Description</th>
                 <th className="text-left py-4 px-4 font-label-md text-label-md text-on-surface-variant">Category</th>
                 <th className="text-right py-4 px-4 font-label-md text-label-md text-on-surface-variant">Amount</th>
+                <th className="text-center py-4 px-4 font-label-md text-label-md text-on-surface-variant">Status</th>
+                <th className="text-center py-4 px-4 font-label-md text-label-md text-on-surface-variant">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -244,11 +318,50 @@ const Transactions: React.FC = () => {
                     }`}>
                       {transaction.amount > 0 ? '+' : ''}{(typeof transaction.amount === 'number' ? transaction.amount : parseFloat(transaction.amount)).toFixed(2)}
                     </td>
+                    <td className="py-4 px-4 text-center">
+                      {transaction.isPaid ? (
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 px-2 py-1 rounded">
+                          <span className="material-symbols-outlined text-[14px]">check_circle</span>
+                          Paid
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-orange-700 bg-orange-100 px-2 py-1 rounded">
+                          <span className="material-symbols-outlined text-[14px]">pending</span>
+                          Pending
+                        </span>
+                      )}
+                      {transaction.hasReceipt && (
+                        <span className="ml-2 inline-flex items-center gap-1 text-xs font-medium text-blue-700 bg-blue-100 px-2 py-1 rounded">
+                          <span className="material-symbols-outlined text-[14px]">receipt</span>
+                          Receipt
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-4 px-4 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => handleMarkAsPaid(transaction)}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title={transaction.isPaid ? 'Mark as unpaid' : 'Mark as paid'}
+                        >
+                          <span className="material-symbols-outlined text-[20px]">
+                            {transaction.isPaid ? 'cancel' : 'check_circle'}
+                          </span>
+                        </button>
+                        <button
+                          onClick={() => handleDelete(transaction.id)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Delete transaction"
+                        >
+                          <span className="material-symbols-outlined text-[20px]">delete</span>
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={4} className="py-8 px-4 text-center text-on-surface-variant">
+                  <td colSpan={6} className="py-8 px-4 text-center text-on-surface-variant">
                     <p className="font-body-md">No transactions found matching your search criteria.</p>
                   </td>
                 </tr>
@@ -257,6 +370,81 @@ const Transactions: React.FC = () => {
           </table>
         </div>
       </Card>
+
+      {/* Receipt Modal */}
+      {showReceiptModal && selectedTransaction && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-surface rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="font-headline-md text-headline-md text-on-surface mb-4">
+              {selectedTransaction.isPaid ? 'Mark as Unpaid' : 'Mark as Paid'}
+            </h3>
+            <p className="font-body-md text-body-md text-on-surface-variant mb-4">
+              {selectedTransaction.description} - {(typeof selectedTransaction.amount === 'number' ? selectedTransaction.amount : parseFloat(selectedTransaction.amount)).toFixed(2)}
+            </p>
+            
+            <div className="mb-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  id="hasReceipt"
+                  onChange={(e) => {
+                    setSelectedTransaction({
+                      ...selectedTransaction,
+                      hasReceipt: e.target.checked
+                    });
+                  }}
+                  className="w-4 h-4 rounded"
+                />
+                <span className="font-body-md text-body-md text-on-surface">
+                  I have a receipt for this transaction
+                </span>
+              </label>
+            </div>
+
+            {selectedTransaction.hasReceipt && (
+              <div className="mb-4">
+                <label className="block font-label-md text-label-md text-on-surface-variant mb-2">
+                  Receipt Note (optional)
+                </label>
+                <textarea
+                  id="receiptNote"
+                  placeholder="Add any notes about the receipt..."
+                  className="w-full bg-surface-container-low border border-outline-variant text-on-surface rounded-lg px-4 py-2 focus:outline-none focus:border-primary"
+                  rows={3}
+                  value={selectedTransaction.receiptNote || ''}
+                  onChange={(e) => {
+                    setSelectedTransaction({
+                      ...selectedTransaction,
+                      receiptNote: e.target.value
+                    });
+                  }}
+                />
+              </div>
+            )}
+
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => {
+                  setShowReceiptModal(false);
+                  setSelectedTransaction(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
+                onClick={() => handleConfirmPayment(selectedTransaction.hasReceipt || false, selectedTransaction.receiptNote || '')}
+                disabled={isLoading}
+              >
+                {isLoading ? 'Processing...' : (selectedTransaction.isPaid ? 'Mark as Unpaid' : 'Mark as Paid')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Transaction Modal */}
       <AddTransactionModal

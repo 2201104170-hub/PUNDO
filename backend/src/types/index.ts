@@ -20,6 +20,9 @@ export interface Transaction {
   status: 'completed' | 'pending' | 'cancelled';
   currency: 'PHP' | 'USD' | 'EUR';
   debtId?: string;
+  isPaid?: boolean;
+  hasReceipt?: boolean;
+  receiptNote?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -53,6 +56,14 @@ export interface RegisterRequest extends AuthRequest {
   name: string;
 }
 
+export interface GoogleAuthRequest {
+  tokenId: string;
+  firstName?: string;
+  lastName?: string;
+  country?: string;
+  currency?: string;
+}
+
 export interface TransactionRequest {
   date: Date;
   description: string;
@@ -62,6 +73,9 @@ export interface TransactionRequest {
   status?: 'completed' | 'pending' | 'cancelled';
   currency?: 'PHP' | 'USD' | 'EUR';
   debtId?: string;
+  isPaid?: boolean;
+  hasReceipt?: boolean;
+  receiptNote?: string;
 }
 
 export interface DebtRequest {
