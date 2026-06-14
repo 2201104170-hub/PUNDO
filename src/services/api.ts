@@ -290,6 +290,78 @@ export const analyticsApi = {
       };
     }
   },
+
+  async getSpendingByCategory(): Promise<ApiResponse<any>> {
+    try {
+      const token = localStorage.getItem('auth_token') || 'test_token';
+      if (!token) {
+        return {
+          success: false,
+          error: 'Authentication required',
+        };
+      }
+
+      const response = await fetch(`${API_URL}/analytics/spending-by-category`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch spending by category');
+      }
+
+      const result = await response.json();
+      return {
+        success: true,
+        data: result.data || result,
+      };
+    } catch (error) {
+      console.error('Spending by category API error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Network error',
+      };
+    }
+  },
+
+  async getMonthlyTrends(months: number = 3): Promise<ApiResponse<any>> {
+    try {
+      const token = localStorage.getItem('auth_token') || 'test_token';
+      if (!token) {
+        return {
+          success: false,
+          error: 'Authentication required',
+        };
+      }
+
+      const response = await fetch(`${API_URL}/analytics/monthly-trends?months=${months}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch monthly trends');
+      }
+
+      const result = await response.json();
+      return {
+        success: true,
+        data: result.data || result,
+      };
+    } catch (error) {
+      console.error('Monthly trends API error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Network error',
+      };
+    }
+  },
+
+  async getAllTransactions(): Promise<ApiResponse<any>> {
+    return transactionsApi.getAll();
+  }
 };
 
 // Debt API
