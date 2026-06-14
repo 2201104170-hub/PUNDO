@@ -52,11 +52,11 @@ const Dashboard: React.FC = () => {
 
         const monthlyIncome = monthlyTxns
           .filter(tx => tx.type === 'income')
-          .reduce((sum, tx) => sum + (tx.amount || 0), 0);
+          .reduce((sum, tx) => sum + (typeof tx.amount === 'number' ? tx.amount : parseFloat(tx.amount) || 0), 0);
 
         const monthlyExpenses = monthlyTxns
           .filter(tx => tx.type === 'expense')
-          .reduce((sum, tx) => sum + Math.abs(tx.amount || 0), 0);
+          .reduce((sum, tx) => sum + Math.abs(typeof tx.amount === 'number' ? tx.amount : parseFloat(tx.amount) || 0), 0);
 
         // Calculate savings rate: (totalIncome - totalExpenses) / totalIncome * 100
         const savingsRate = metrics.totalIncome > 0 
@@ -68,7 +68,7 @@ const Dashboard: React.FC = () => {
           {
             id: '1',
             title: 'Total Balance',
-            value: `$${metrics.currentBalance?.toFixed(2) || '0.00'}`,
+            value: `$${typeof metrics.currentBalance === 'number' ? metrics.currentBalance.toFixed(2) : parseFloat(metrics.currentBalance || '0').toFixed(2)}`,
             icon: 'account_balance_wallet',
             trend: { value: 0, direction: 'neutral' },
             bgColor: 'bg-primary-container/20',
@@ -76,7 +76,7 @@ const Dashboard: React.FC = () => {
           {
             id: '2',
             title: 'Monthly Income',
-            value: `$${monthlyIncome.toFixed(2)}`,
+            value: `$${typeof monthlyIncome === 'number' ? monthlyIncome.toFixed(2) : '0.00'}`,
             icon: 'trending_up',
             trend: { value: 0, direction: 'neutral' },
             bgColor: 'bg-secondary-container/20',
@@ -84,7 +84,7 @@ const Dashboard: React.FC = () => {
           {
             id: '3',
             title: 'Monthly Expenses',
-            value: `$${monthlyExpenses.toFixed(2)}`,
+            value: `$${typeof monthlyExpenses === 'number' ? monthlyExpenses.toFixed(2) : '0.00'}`,
             icon: 'trending_down',
             trend: { value: 0, direction: 'neutral' },
             bgColor: 'bg-tertiary-container/20',
@@ -92,7 +92,7 @@ const Dashboard: React.FC = () => {
           {
             id: '4',
             title: 'Savings Rate',
-            value: `${savingsRate.toFixed(1)}%`,
+            value: `${typeof savingsRate === 'number' ? savingsRate.toFixed(1) : '0.0'}%`,
             icon: 'savings',
             bgColor: 'bg-primary-container/20',
           },
@@ -104,7 +104,7 @@ const Dashboard: React.FC = () => {
         const formattedTransactions = (txns || []).map((tx: any, idx: number) => ({
           id: tx.id || idx.toString(),
           description: tx.description || 'Transaction',
-          amount: tx.type === 'income' ? `+$${Math.abs(tx.amount).toFixed(2)}` : `-$${Math.abs(tx.amount).toFixed(2)}`,
+          amount: tx.type === 'income' ? `+$${Math.abs(typeof tx.amount === 'number' ? tx.amount : parseFloat(tx.amount) || 0).toFixed(2)}` : `-$${Math.abs(typeof tx.amount === 'number' ? tx.amount : parseFloat(tx.amount) || 0).toFixed(2)}`,
           date: formatDate(new Date(tx.date)),
           category: tx.category || 'Other',
           type: tx.type || 'expense',
@@ -216,18 +216,24 @@ const Dashboard: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                <p className={`font-headline-md text-headline-md ${
-                  transaction.type === 'income'
-                    ? 'text-secondary'
-                    : 'text-on-surface'
-                }`}>
-                  {transaction.amount}
-                </p>
+                <div className="text-right">
+                  <p className={`font-body-md text-body-md font-semibold ${
+                    transaction.type === 'income' ? 'text-secondary' : 'text-error'
+                  }`}>
+                    {transaction.amount}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-on-surface-variant text-sm">No transactions yet. Add one to get started!</p>
+          <div className="text-center py-8">
+            <p className="text-on-surface-variant mb-4">No transactions yet. Add one to get started!</p>
+            <Button variant="primary" size="md" onClick={() => navigate('/transactions?modal=add')}>
+              <span className="material-symbols-outlined text-[18px]">add</span>
+              Add Transaction
+            </Button>
+          </div>
         )}
       </Card>
     </DashboardLayout>

@@ -25,31 +25,10 @@ async function seed() {
       {
         date: new Date('2024-01-15'),
         description: 'Salary',
-        amount: 5000,
+        amount: 0,
         category: 'Income',
         type: 'income',
-      },
-      {
-        date: new Date('2024-01-20'),
-        description: 'Grocery Shopping',
-        amount: 150,
-        category: 'Food & Dining',
-        type: 'expense',
-      },
-      {
-        date: new Date('2024-01-22'),
-        description: 'Electric Bill',
-        amount: 80,
-        category: 'Utilities',
-        type: 'expense',
-      },
-      {
-        date: new Date('2024-01-25'),
-        description: 'Freelance Project',
-        amount: 1000,
-        category: 'Income',
-        type: 'income',
-      },
+      }
     ];
 
     for (const transaction of transactionsData) {
@@ -64,18 +43,11 @@ async function seed() {
     const debtsData = [
       {
         creditor: 'Bank of America',
-        amount: 5000,
+        amount: 0,
         interestRate: 6.5,
         dueDate: new Date('2024-02-15'),
         type: 'i_owe',
-      },
-      {
-        creditor: 'Chase Credit Card',
-        amount: 2300,
-        interestRate: 18.9,
-        dueDate: new Date('2024-01-20'),
-        type: 'i_owe',
-      },
+      }
     ];
 
     for (const debt of debtsData) {
